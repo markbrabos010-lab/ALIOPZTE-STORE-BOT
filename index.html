@@ -39,8 +39,8 @@
         .dash-brand i { color: var(--main-glow); font-size: 1.8rem; filter: drop-shadow(0 0 8px var(--main-glow)); }
 
         .tokens-box { background: rgba(13, 18, 30, 0.92); border: 2px solid var(--main-glow); border-radius: 16px; padding: 18px; margin-bottom: 20px; box-shadow: 0 0 20px rgba(0, 242, 254, 0.12); }
-        .tokens-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        @media (max-width: 768px) { .tokens-grid { grid-template-columns: 1fr; } }
+        .tokens-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        @media (max-width: 900px) { .tokens-grid { grid-template-columns: 1fr; } }
 
         .secret-input { -webkit-text-security: disc; text-security: disc; }
 
@@ -52,7 +52,7 @@
         .btn-stop-bot { padding: 10px 18px; border-radius: 10px; border: none; font-weight: 900; font-size: 0.9rem; cursor: pointer; font-family: inherit; background: #ef4444; color: #fff; display: none; align-items: center; gap: 8px; }
         .btn-slash-sync { padding: 10px 16px; border-radius: 10px; border: 1px solid var(--main-glow); font-weight: 800; font-size: 0.85rem; cursor: pointer; font-family: inherit; background: rgba(0, 242, 254, 0.12); color: var(--main-glow); display: inline-flex; align-items: center; gap: 6px; }
 
-        .live-console { background: #020408; border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-family: monospace; font-size: 0.82rem; color: #38bdf8; max-height: 150px; overflow-y: auto; line-height: 1.6; }
+        .live-console { background: #020408; border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-family: monospace; font-size: 0.82rem; color: #38bdf8; max-height: 160px; overflow-y: auto; line-height: 1.6; }
 
         .dash-layout { display: grid; grid-template-columns: 240px 1fr; gap: 20px; align-items: start; }
         @media (max-width: 800px) { .dash-layout { grid-template-columns: 1fr; } }
@@ -72,7 +72,7 @@
         .form-group { margin-bottom: 15px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
-        label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.88rem; color: #e2e8f0; }
+        label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.85rem; color: #e2e8f0; }
         input[type="text"], input[type="password"], textarea, select {
             width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15);
             background: rgba(0,0,0,0.6); color: #fff; font-family: inherit; font-size: 0.9rem; outline: none;
@@ -125,15 +125,19 @@
             </div>
         </header>
 
-        <!-- صندوق التوكنات والتشغيل المستمر بدون فصل -->
+        <!-- صندوق التوكنات وجسر جوجل المدمج -->
         <div class="tokens-box">
             <div class="tokens-grid">
                 <div>
-                    <label><i class="fa-brands fa-discord" style="color:#5865F2;"></i> توكن البوت (Discord Bot Token):</label>
+                    <label><i class="fa-brands fa-discord" style="color:#5865F2;"></i> 1. توكن البوت (Discord Bot Token):</label>
                     <input type="text" id="discordBotToken" class="secret-input" autocomplete="off" spellcheck="false" placeholder="ضع توكن البوت هنا..." oninput="localStorage.setItem('ali_discord_bot_token', this.value.trim())">
                 </div>
                 <div>
-                    <label><i class="fa-solid fa-key" style="color:#ff007f;"></i> توكن GitHub (لحفظ الإعدادات):</label>
+                    <label><i class="fa-solid fa-bridge" style="color:#10b981;"></i> 2. رابط جسر جوجل (مدمج وجاهز ✅):</label>
+                    <input type="text" id="gasBridgeUrl" autocomplete="off" spellcheck="false" value="https://script.google.com/macros/s/AKfycbyaDbP_jyQVEkx8W8X2zJkDKpjKFKMnQHjUJ3JbUAWX6cqKc3NuncX5xUBJJufu3Ukr/exec" oninput="localStorage.setItem('ali_gas_bridge_url', this.value.trim())">
+                </div>
+                <div>
+                    <label><i class="fa-solid fa-key" style="color:#ff007f;"></i> 3. توكن GitHub (لحفظ الإعدادات):</label>
                     <input type="text" id="githubToken" class="secret-input" autocomplete="off" spellcheck="false" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" oninput="localStorage.setItem('ali_bot_gh_token', this.value.trim())">
                 </div>
             </div>
@@ -148,7 +152,7 @@
 
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button id="btnStartBot" onclick="startBotEngine()" class="btn-run-bot">
-                        <i class="fa-solid fa-power-off"></i> تشغيل البوت الآن (مع مانع الفصل) 🟢
+                        <i class="fa-solid fa-power-off"></i> تشغيل البوت الآن 🟢
                     </button>
                     <button id="btnSyncSlash" onclick="registerAllSlashCommands()" class="btn-slash-sync" style="display:none;">
                         <i class="fa-solid fa-terminal"></i> تحديث أوامر السلاش (/)
@@ -160,7 +164,7 @@
             </div>
 
             <div id="liveConsole" class="live-console">
-                <div>[النظام]: مرحباً يا علي! اضغط على "تشغيل البوت الآن" ليشتغل البوت وأوامر السلاش والاختصارات مباشرة بدون فصل.</div>
+                <div>[النظام]: تم ربط جسر جوجل تلقائياً! اضغط "تشغيل البوت الآن 🟢" ليرد البوت في الشات ويفعل أوامر السلاش فوراً.</div>
             </div>
         </div>
 
@@ -218,7 +222,7 @@
                 <!-- 2. أوامر الإدارة والاختصارات -->
                 <div id="tab-shortcuts" class="tab-pane">
                     <h3 class="pane-title"><i class="fa-solid fa-bolt"></i> أوامر الإدارة والاختصارات + أوامر السلاش (/)</h3>
-                    <p class="pane-desc">جميع هذه الأوامر تعمل بطريقتين: إما بكتابة <b>الاختصار في الشات مباشرة</b> (مثل: <code>م 10</code> أو <code>ق</code> أو <code>المتجر</code>)، أو عبر <b>أوامر السلاش <code>/</code></b>!</p>
+                    <p class="pane-desc">جميع هذه الأوامر تعمل بطريقتين: إما بكتابة <b>الاختصار في الشات مباشرة</b> (مثل: <code>م 10</code> أو <code>ق</code> أو <code>متجر</code>)، أو عبر <b>أوامر السلاش <code>/</code></b>!</p>
 
                     <div id="commandsContainer"></div>
 
@@ -233,7 +237,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>الكلمة أو الجملة (Trigger):</label>
-                            <input type="text" id="arTrigger" placeholder="مثال: السلام عليكم / رابط المتجر">
+                            <input type="text" id="arTrigger" placeholder="مثال: سلام عليكم / رابط المتجر">
                         </div>
                         <div class="form-group">
                             <label>شرط التطابق:</label>
@@ -371,6 +375,7 @@
 
     <script>
         const DASH_PASSWORD = "19861986";
+        const DEFAULT_GAS_BRIDGE_URL = "https://script.google.com/macros/s/AKfycbyaDbP_jyQVEkx8W8X2zJkDKpjKFKMnQHjUJ3JbUAWX6cqKc3NuncX5xUBJJufu3Ukr/exec";
         const REPO_API_URL = "https://api.github.com/repos/markbrabos010-lab/ALIOPZTE-STORE-BOT/contents/bot-config.json";
         const STORE_DATA_URL = "https://raw.githubusercontent.com/markbrabos010-lab/ALIOPZTE-/main/data.json";
         const STORE_WEB_URL = "https://markbrabos010-lab.github.io/ALIOPZTE-/";
@@ -395,6 +400,7 @@
             activityText: "ALIOPZTE Store 🔥",
             commands: JSON.parse(JSON.stringify(DEFAULT_COMMANDS)),
             autoReplies: [
+                { trigger: "سلام عليكم", response: "وعليكم السلام ورحمة الله وبركاته يا {user}، منور سيرفر ALIOPZTE! 🌹", matchType: "contains" },
                 { trigger: "السلام عليكم", response: "وعليكم السلام ورحمة الله وبركاته يا {user}، منور سيرفر ALIOPZTE! 🌹", matchType: "contains" },
                 { trigger: "رابط المتجر", response: "🔥 تفضل رابط متجر ALIOPZTE الرسمي:\nhttps://markbrabos010-lab.github.io/ALIOPZTE-/", matchType: "contains" }
             ],
@@ -404,18 +410,15 @@
             storeNotify: { enabled: true, channelId: "", mentionType: "@everyone", webhookUrl: "" }
         };
 
-        // متغيرات محرك البوت المباشر
         let gatewayWs = null;
-        let heartbeatInterval = null;
+        let workerTimer = null;
         let storeWatchInterval = null;
         let lastStoreItemId = null;
         let lastSequence = null;
         let keepBotRunning = false;
         let botAppId = null;
-        let botUserId = null;
         let connectedGuildIds = [];
-        let audioCtx = null;
-        const spamMap = new Map();
+        let silentAudio = null;
 
         function logToConsole(msg, color = "#38bdf8") {
             const box = document.getElementById('liveConsole');
@@ -424,24 +427,36 @@
             box.scrollTop = box.scrollHeight;
         }
 
-        // مانع تجميد المتصفح في الخلفية على التابلت والجوال
-        function enableBackgroundKeepAlive() {
+        function startBackgroundWorker(intervalMs) {
+            if (workerTimer) workerTimer.terminate();
+            const workerCode = `
+                let timer = null;
+                self.onmessage = function(e) {
+                    if (e.data.action === 'start') {
+                        if (timer) clearInterval(timer);
+                        timer = setInterval(() => self.postMessage('tick'), e.data.interval);
+                    } else if (e.data.action === 'stop') {
+                        if (timer) clearInterval(timer);
+                    }
+                };
+            `;
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            workerTimer = new Worker(URL.createObjectURL(blob));
+            workerTimer.onmessage = () => {
+                if (gatewayWs && gatewayWs.readyState === WebSocket.OPEN) {
+                    gatewayWs.send(JSON.stringify({ op: 1, d: lastSequence }));
+                }
+            };
+            workerTimer.postMessage({ action: 'start', interval: intervalMs });
+
             try {
-                if (!audioCtx) {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    audioCtx = new AudioContext();
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    gain.gain.value = 0.0001; // صامت تماماً ولكن يمنع المتصفح من النوم
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.start();
-                } else if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
+                if (!silentAudio) {
+                    silentAudio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
+                    silentAudio.loop = true;
+                    silentAudio.volume = 0.01;
                 }
-                if ('wakeLock' in navigator) {
-                    navigator.wakeLock.request('screen').catch(() => {});
-                }
+                silentAudio.play().catch(() => {});
+                if ('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(() => {});
             } catch (e) {}
         }
 
@@ -456,6 +471,9 @@
 
                 const savedBotToken = localStorage.getItem('ali_discord_bot_token');
                 if (savedBotToken) document.getElementById('discordBotToken').value = savedBotToken;
+
+                const savedBridge = localStorage.getItem('ali_gas_bridge_url');
+                document.getElementById('gasBridgeUrl').value = savedBridge || DEFAULT_GAS_BRIDGE_URL;
 
                 const localCfg = localStorage.getItem('ali_bot_local_cfg');
                 if (localCfg) {
@@ -478,24 +496,36 @@
             btn.classList.add('active');
         }
 
-        // ================= الاتصال بـ Discord REST API (مع تخطي قيود المتصفح تلقائياً) =================
+        // ================= إرسال أوامر البوت عبر جسر Google Script المدمج =================
         async function callDiscordAPI(endpoint, method = 'GET', bodyObj = null) {
             const botToken = document.getElementById('discordBotToken').value.trim();
-            const targetUrl = `https://discord.com/api/v10${endpoint}`;
-            const headers = {
-                'Authorization': `Bot ${botToken}`,
-                'Content-Type': 'application/json'
-            };
-            const fetchOpts = { method, headers };
-            if (bodyObj !== null) fetchOpts.body = JSON.stringify(bodyObj);
+            const bridgeUrl = document.getElementById('gasBridgeUrl').value.trim() || DEFAULT_GAS_BRIDGE_URL;
 
             try {
-                const res = await fetch(targetUrl, fetchOpts);
-                return res;
-            } catch (directErr) {
-                // في حال حظر المتصفح لاتصال CORS المباشر، نمرره عبر جسر آمن
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-                return await fetch(proxyUrl, fetchOpts);
+                const res = await fetch(bridgeUrl, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        token: botToken,
+                        endpoint: endpoint,
+                        method: method,
+                        body: bodyObj
+                    })
+                });
+                const result = await res.json();
+                const isOk = result.status >= 200 && result.status < 300;
+                if (!isOk) {
+                    logToConsole(`⚠️ رد ديسكورد (${result.status}):${result.body || result.error}`, "#f59e0b");
+                }
+                return {
+                    ok: isOk,
+                    status: result.status,
+                    json: async () => JSON.parse(result.body || "{}")
+                };
+            } catch (err) {
+                logToConsole(`❌ خطأ في الاتصال بجسر جوجل: ${err.message}`, "#ef4444");
+                return { ok: false, status: 500 };
             }
         }
 
@@ -504,19 +534,20 @@
             if (content) payload.content = content;
             if (embeds) payload.embeds = embeds;
             if (replyToId) payload.message_reference = { message_id: replyToId };
-            await callDiscordAPI(`/channels/${channelId}/messages`, 'POST', payload).catch(e => {
-                logToConsole(`⚠️ تعذر إرسال الرسالة: ${e.message}`, "#f59e0b");
-            });
+            const res = await callDiscordAPI(`/channels/${channelId}/messages`, 'POST', payload);
+            if (res.ok) {
+                logToConsole(`✅ تم إرسال رد البوت في الديسكورد بنجاح!`, "#10b981");
+            }
         }
 
-        // ================= تسجيل أوامر السلاش (/) في السيرفر فوراً =================
+        // ================= تسجيل أوامر السلاش (/) =================
         const SLASH_DEFINITIONS = [
             { name: "store", description: "🛒 عرض أحدث الألعاب والمودات في متجر ALIOPZTE" },
             { name: "ping", description: "⚡ فحص سرعة استجابة البوت" },
             {
                 name: "clear",
                 description: "🧹 مسح عدد من الرسائل في الروم",
-                options: [{ name: "count", description: "عدد الرسائل (1 - 100)", type: 4, required: false }]
+                options: [{ name: "count", description: "عدد الرسائل (2 - 100)", type: 4, required: false }]
             },
             { name: "lock", description: "🔒 قفل الروم الحالي ومنع الكتابة" },
             { name: "unlock", description: "🔓 فتح الروم الحالي للسماح بالكتابة" },
@@ -538,22 +569,19 @@
         ];
 
         async function registerAllSlashCommands() {
-            if (!botAppId) return alert("⚠️ شغل البوت أولاً ليتمكن من تسجيل أوامر السلاش!");
-            logToConsole("⏳ جاري تسجيل وتفعيل أوامر السلاش (/) في سيرفرك...", "#f59e0b");
-
-            try {
-                // تسجيل عام + تسجيل فوري داخل كل سيرفر متواجد فيه البوت
-                await callDiscordAPI(`/applications/${botAppId}/commands`, 'PUT', SLASH_DEFINITIONS);
-                for (const gid of connectedGuildIds) {
-                    await callDiscordAPI(`/applications/${botAppId}/guilds/${gid}/commands`, 'PUT', SLASH_DEFINITIONS);
-                }
-                logToConsole("✅ تم تفعيل جميع أوامر السلاش (/) في سيرفرك بنجاح! اكتب / في الشات لتجربتها.", "#10b981");
-            } catch (e) {
-                logToConsole("⚠️ حدث خطأ أثناء تسجيل أوامر السلاش.", "#ef4444");
+            if (!botAppId) return alert("⚠️ شغل البوت أولاً!");
+            logToConsole("⏳ جاري تسجيل أوامر السلاش (/) عبر جسر جوجل...", "#f59e0b");
+            let successCount = 0;
+            for (const gid of connectedGuildIds) {
+                const r = await callDiscordAPI(`/applications/${botAppId}/guilds/${gid}/commands`, 'PUT', SLASH_DEFINITIONS);
+                if (r.ok) successCount++;
+            }
+            if (successCount > 0) {
+                logToConsole(`✅ تم تسجيل وتفعيل جميع أوامر السلاش (/) في سيرفرك فعلياً! اكتب / في الديسكورد الآن.`, "#10b981");
             }
         }
 
-        // ================= محرك البوت الكامل (WebSocket Gateway + الأوامر + الاختصارات) =================
+        // ================= محرك البوت =================
         function getActivityTypeNum(typeStr) {
             const map = { PLAYING: 0, LISTENING: 2, WATCHING: 3, COMPETING: 5 };
             return map[typeStr] ?? 0;
@@ -561,13 +589,9 @@
 
         function startBotEngine() {
             const botToken = document.getElementById('discordBotToken').value.trim();
-            if (!botToken) {
-                alert("⚠️ يرجى وضع توكن البوت (Discord Bot Token) في الخانة المخصصة بالأعلى أولاً!");
-                return;
-            }
+            if (!botToken) return alert("⚠️ ضع توكن البوت أولاً!");
 
             keepBotRunning = true;
-            enableBackgroundKeepAlive();
             connectGateway();
         }
 
@@ -586,32 +610,15 @@
                 const payload = JSON.parse(event.data);
                 const { op, d, t, s } = payload;
 
-                if (s !== null && s !== undefined) {
-                    lastSequence = s;
-                }
+                if (s !== null && s !== undefined) lastSequence = s;
 
-                // إذا طلب ديسكورد نبضة فورية
                 if (op === 1) {
                     gatewayWs.send(JSON.stringify({ op: 1, d: lastSequence }));
                 }
 
-                // op 10: Hello -> بدء النبضات المنتظمة كل 25 ثانية لمنع الفصل
                 if (op === 10) {
-                    const interval = Math.min(d.heartbeat_interval || 41250, 25000);
-                    if (heartbeatInterval) clearInterval(heartbeatInterval);
-                    
-                    // إرسال أول نبضة فوراً ثم كل 25 ثانية
-                    setTimeout(() => {
-                        if (gatewayWs && gatewayWs.readyState === WebSocket.OPEN) {
-                            gatewayWs.send(JSON.stringify({ op: 1, d: lastSequence }));
-                        }
-                    }, 1500);
-
-                    heartbeatInterval = setInterval(() => {
-                        if (gatewayWs && gatewayWs.readyState === WebSocket.OPEN) {
-                            gatewayWs.send(JSON.stringify({ op: 1, d: lastSequence }));
-                        }
-                    }, interval);
+                    const interval = Math.min(d.heartbeat_interval || 41250, 20000);
+                    startBackgroundWorker(interval);
 
                     collectFormData();
                     gatewayWs.send(JSON.stringify({
@@ -632,17 +639,13 @@
                     }));
                 }
 
-                // op 7 أو op 9: إعادة اتصال فورية بدون فصل
                 if (op === 7 || op === 9) {
-                    logToConsole("🔄 جاري تجديد جلسة البوت تلقائياً...", "#f59e0b");
                     setTimeout(connectGateway, 1500);
                     return;
                 }
 
-                // جاهزية البوت (READY)
                 if (t === "READY") {
                     const botUser = d.user;
-                    botUserId = botUser.id;
                     botAppId = d.application?.id || botUser.id;
                     connectedGuildIds = (d.guilds || []).map(g => g.id);
 
@@ -653,7 +656,7 @@
                     document.getElementById('btnStopBot').style.display = 'inline-flex';
                     document.getElementById('btnSyncSlash').style.display = 'inline-flex';
 
-                    logToConsole(`✅ تم تشغيل البوت بنجاح باسم: ${botUser.username}!`, "#10b981");
+                    logToConsole(`✅ البوت متصل الآن باسم: ${botUser.username}!`, "#10b981");
                     registerAllSlashCommands();
 
                     if (storeWatchInterval) clearInterval(storeWatchInterval);
@@ -661,36 +664,30 @@
                     storeWatchInterval = setInterval(checkStoreForNewItems, 30000);
                 }
 
-                // تنفيذ أوامر السلاش (INTERACTION_CREATE)
                 if (t === "INTERACTION_CREATE" && d) {
                     handleSlashInteraction(d);
                 }
 
-                // تنفيذ الاختصارات والردود التلقائية والحماية (MESSAGE_CREATE)
                 if (t === "MESSAGE_CREATE" && d && !d.author?.bot) {
                     handleIncomingMessage(d);
                 }
 
-                // ترحيب الأعضاء الجدد
                 if (t === "GUILD_MEMBER_ADD" && d) {
                     handleMemberJoin(d);
                 }
             };
 
             gatewayWs.onclose = (ev) => {
-                if (heartbeatInterval) clearInterval(heartbeatInterval);
+                if (workerTimer) workerTimer.postMessage({ action: 'stop' });
 
                 if (ev.code === 4004) {
                     keepBotRunning = false;
-                    logToConsole("❌ خطأ: توكن البوت غير صحيح!", "#ef4444");
-                    alert("❌ توكن البوت غير صحيح!");
+                    logToConsole("❌ توكن البوت غير صحيح!", "#ef4444");
                 } else if (ev.code === 4014) {
                     keepBotRunning = false;
-                    logToConsole("⚠️ يجب تفعيل الخيارات الثلاثة (Presence / Server Members / Message Content Intent) من موقع Discord Developer Portal!", "#f59e0b");
-                    alert("⚠️ فعّل الخيارات الثلاثة (Privileged Gateway Intents) من قسم Bot في موقع ديسكورد!");
+                    logToConsole("⚠️ فعّل الخيارات الثلاثة (Privileged Gateway Intents) من موقع ديسكورد!", "#f59e0b");
                 } else if (keepBotRunning) {
-                    logToConsole("🔄 انقطع الاتصال المؤقت، جاري إعادة تشغيل البوت تلقائياً خلال ثانيتين...", "#f59e0b");
-                    setTimeout(connectGateway, 2000);
+                    setTimeout(connectGateway, 1500);
                     return;
                 }
 
@@ -705,12 +702,9 @@
 
         function stopBotEngine() {
             keepBotRunning = false;
-            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            if (workerTimer) workerTimer.postMessage({ action: 'stop' });
             if (storeWatchInterval) clearInterval(storeWatchInterval);
-            if (gatewayWs) {
-                gatewayWs.close();
-                gatewayWs = null;
-            }
+            if (gatewayWs) { gatewayWs.close(); gatewayWs = null; }
             logToConsole("🔴 تم إيقاف البوت يدوياً.", "#ef4444");
         }
 
@@ -730,10 +724,10 @@
             const channelId = inter.channel_id;
             const guildId = inter.guild_id;
             const options = inter.data?.options || [];
-            logToConsole(`⚡ تم استدعاء أمر سلاش: /${cmdName} بواسطة ${inter.member?.user?.username || 'عضو'}`, "#00f2fe");
+            logToConsole(`⚡ تنفيذ أمر سلاش: /${cmdName}`, "#00f2fe");
 
             if (cmdName === "ping") {
-                return replyInteraction(inter.id, inter.token, "🏓 **Pong!** البوت شغال بسرعة البرق ومتصل بلوحة ALIOPZTE! ⚡");
+                return replyInteraction(inter.id, inter.token, "🏓 **Pong!** البوت شغال بسرعة البرق! ⚡");
             }
 
             if (cmdName === "store") {
@@ -754,25 +748,17 @@
 
             if (cmdName === "say") {
                 const text = options.find(o => o.name === "text")?.value || "";
-                await replyInteraction(inter.id, inter.token, "✅ تم إرسال رسالتك!");
+                await replyInteraction(inter.id, inter.token, "✅ تم الإرسال!");
                 return sendChannelMessage(channelId, text);
             }
 
             if (cmdName === "lock") {
-                await callDiscordAPI(`/channels/${channelId}/permissions/${guildId}`, 'PUT', {
-                    allow: "0",
-                    deny: "2048", // SendMessages
-                    type: 0
-                });
+                await callDiscordAPI(`/channels/${channelId}/permissions/${guildId}`, 'PUT', { allow: "0", deny: "2048", type: 0 });
                 return replyInteraction(inter.id, inter.token, "🔒 **تم قفل الروم بنجاح!**");
             }
 
             if (cmdName === "unlock") {
-                await callDiscordAPI(`/channels/${channelId}/permissions/${guildId}`, 'PUT', {
-                    allow: "2048",
-                    deny: "0",
-                    type: 0
-                });
+                await callDiscordAPI(`/channels/${channelId}/permissions/${guildId}`, 'PUT', { allow: "2048", deny: "0", type: 0 });
                 return replyInteraction(inter.id, inter.token, "🔓 **تم فتح الروم بنجاح!**");
             }
 
@@ -793,39 +779,26 @@
             if (cmdName === "kick") {
                 const targetId = options.find(o => o.name === "user")?.value;
                 const res = await callDiscordAPI(`/guilds/${guildId}/members/${targetId}`, 'DELETE');
-                if (res.ok || res.status === 204) {
-                    return replyInteraction(inter.id, inter.token, `👢 تم طرد العضو <@${targetId}> بنجاح!`);
-                } else {
-                    return replyInteraction(inter.id, inter.token, `❌ تعذر طرد العضو (تأكد أن رتبة البوت أعلى من رتبة العضو).`);
-                }
+                return replyInteraction(inter.id, inter.token, res.ok ? `👢 تم طرد <@${targetId}> بنجاح!` : `❌ تعذر الطرد (تأكد من صلاحيات ورتبة البوت).`);
             }
 
             if (cmdName === "ban") {
                 const targetId = options.find(o => o.name === "user")?.value;
                 const res = await callDiscordAPI(`/guilds/${guildId}/bans/${targetId}`, 'PUT', { delete_message_seconds: 0 });
-                if (res.ok || res.status === 204) {
-                    return replyInteraction(inter.id, inter.token, `🔨 تم حظر العضو <@${targetId}> نهائياً!`);
-                } else {
-                    return replyInteraction(inter.id, inter.token, `❌ تعذر حظر العضو (تأكد أن رتبة البوت أعلى من رتبة العضو).`);
-                }
+                return replyInteraction(inter.id, inter.token, res.ok ? `🔨 تم حظر <@${targetId}> نهائياً!` : `❌ تعذر الحظر (تأكد من صلاحيات ورتبة البوت).`);
             }
         }
 
-        // ================= معالجة رسائل الشات والاختصارات والردود التلقائية =================
+        // ================= معالجة رسائل الشات والاختصارات والردود =================
         async function handleIncomingMessage(msg) {
             collectFormData();
             const content = (msg.content || "").trim();
-
-            if (!content && (!msg.attachments || msg.attachments.length === 0)) {
-                logToConsole("⚠️ وصلت رسالة بدون نص! تأكد من تفعيل Message Content Intent في موقع ديسكورد.", "#f59e0b");
-                return;
-            }
+            if (!content) return;
 
             logToConsole(`💬 [${msg.author.username}]:${content}`, "#cbd5e1");
-
             const contentLower = content.toLowerCase();
 
-            // 1. الحماية التلقائية (Auto-Mod)
+            // 1. الحماية التلقائية
             if (botConfig.automod) {
                 if (botConfig.automod.antiInvite && /(discord\.gg\/|discord\.com\/invite\/)/i.test(contentLower)) {
                     await callDiscordAPI(`/channels/${msg.channel_id}/messages/${msg.id}`, 'DELETE');
@@ -839,12 +812,12 @@
                     const foundBad = botConfig.automod.badWords.some(w => w && contentLower.includes(w.toLowerCase()));
                     if (foundBad) {
                         await callDiscordAPI(`/channels/${msg.channel_id}/messages/${msg.id}`, 'DELETE');
-                        return sendChannelMessage(msg.channel_id, `⚠️ <@${msg.author.id}>، يرجى التزام الاحترام وعدم استخدام كلمات ممنوعة!`);
+                        return sendChannelMessage(msg.channel_id, `⚠️ <@${msg.author.id}>، يرجى عدم استخدام كلمات ممنوعة!`);
                     }
                 }
             }
 
-            // 2. الردود التلقائية (Auto-Responder)
+            // 2. الردود التلقائية
             if (botConfig.autoReplies?.length > 0) {
                 for (const rule of botConfig.autoReplies) {
                     const trig = (rule.trigger || "").trim().toLowerCase();
@@ -852,13 +825,13 @@
                     const isMatch = (rule.matchType === 'exact') ? (contentLower === trig) : contentLower.includes(trig);
                     if (isMatch) {
                         const replyText = rule.response.replace(/\{user\}/g, `<@${msg.author.id}>`);
-                        logToConsole(`🤖 رد تلقائي على [${msg.author.username}]`, "#10b981");
+                        logToConsole(`🤖 جاري إرسال رد تلقائي على [${msg.author.username}]...`, "#10b981");
                         return sendChannelMessage(msg.channel_id, replyText, null, msg.id);
                     }
                 }
             }
 
-            // 3. الأوامر والاختصارات (تعمل مباشرة بالاختصار أو مع البادئة)
+            // 3. الأوامر والاختصارات
             const args = content.split(/\s+/);
             let firstWord = args.shift().toLowerCase();
             const prefix = botConfig.prefix || "!";
@@ -905,20 +878,12 @@
             }
 
             if (matchedCmd === 'lock') {
-                await callDiscordAPI(`/channels/${msg.channel_id}/permissions/${msg.guild_id}`, 'PUT', {
-                    allow: "0",
-                    deny: "2048",
-                    type: 0
-                });
+                await callDiscordAPI(`/channels/${msg.channel_id}/permissions/${msg.guild_id}`, 'PUT', { allow: "0", deny: "2048", type: 0 });
                 return sendChannelMessage(msg.channel_id, "🔒 **تم قفل الروم بنجاح!**", null, msg.id);
             }
 
             if (matchedCmd === 'unlock') {
-                await callDiscordAPI(`/channels/${msg.channel_id}/permissions/${msg.guild_id}`, 'PUT', {
-                    allow: "2048",
-                    deny: "0",
-                    type: 0
-                });
+                await callDiscordAPI(`/channels/${msg.channel_id}/permissions/${msg.guild_id}`, 'PUT', { allow: "2048", deny: "0", type: 0 });
                 return sendChannelMessage(msg.channel_id, "🔓 **تم فتح الروم بنجاح!**", null, msg.id);
             }
 
@@ -930,8 +895,6 @@
                     const ids = msgs.map(m => m.id);
                     if (ids.length >= 2) {
                         await callDiscordAPI(`/channels/${msg.channel_id}/messages/bulk-delete`, 'POST', { messages: ids });
-                    } else if (ids.length === 1) {
-                        await callDiscordAPI(`/channels/${msg.channel_id}/messages/${ids[0]}`, 'DELETE');
                     }
                     return sendChannelMessage(msg.channel_id, `🧹 تم مسح **${ids.length}** رسالة بنجاح!`);
                 }
@@ -941,22 +904,14 @@
                 const target = msg.mentions?.[0];
                 if (!target) return sendChannelMessage(msg.channel_id, "⚠️ منشن العضو المراد طرده! مثال: `ط @عضو`", null, msg.id);
                 const res = await callDiscordAPI(`/guilds/${msg.guild_id}/members/${target.id}`, 'DELETE');
-                if (res.ok || res.status === 204) {
-                    return sendChannelMessage(msg.channel_id, `👢 تم طرد **${target.username}** من السيرفر!`);
-                } else {
-                    return sendChannelMessage(msg.channel_id, "❌ تعذر طرد العضو (تأكد أن رتبة البوت أعلى من رتبته).");
-                }
+                return sendChannelMessage(msg.channel_id, res.ok ? `👢 تم طرد **${target.username}**!` : "❌ تعذر طرد العضو.");
             }
 
             if (matchedCmd === 'ban') {
                 const target = msg.mentions?.[0];
                 if (!target) return sendChannelMessage(msg.channel_id, "⚠️ منشن العضو المراد حظره! مثال: `ب @عضو`", null, msg.id);
                 const res = await callDiscordAPI(`/guilds/${msg.guild_id}/bans/${target.id}`, 'PUT', { delete_message_seconds: 0 });
-                if (res.ok || res.status === 204) {
-                    return sendChannelMessage(msg.channel_id, `🔨 تم حظر **${target.username}** نهائياً!`);
-                } else {
-                    return sendChannelMessage(msg.channel_id, "❌ تعذر حظر العضو (تأكد أن رتبة البوت أعلى من رتبته).");
-                }
+                return sendChannelMessage(msg.channel_id, res.ok ? `🔨 تم حظر **${target.username}** نهائياً!` : "❌ تعذر حظر العضو.");
             }
 
             if (matchedCmd === 'mute') {
@@ -965,18 +920,14 @@
                 const mins = parseInt(args[1]) || 15;
                 const until = new Date(Date.now() + mins * 60000).toISOString();
                 const res = await callDiscordAPI(`/guilds/${msg.guild_id}/members/${target.id}`, 'PATCH', { communication_disabled_until: until });
-                if (res.ok) {
-                    return sendChannelMessage(msg.channel_id, `🔇 تم إعطاء ميوت لـ **${target.username}** لمدة **${mins} دقيقة**!`);
-                }
+                if (res.ok) return sendChannelMessage(msg.channel_id, `🔇 تم إعطاء ميوت لـ **${target.username}** لمدة **${mins} دقيقة**!`);
             }
 
             if (matchedCmd === 'unmute') {
                 const target = msg.mentions?.[0];
                 if (!target) return sendChannelMessage(msg.channel_id, "⚠️ منشن العضو لفك الميوت! مثال: `تكلم @عضو`", null, msg.id);
                 const res = await callDiscordAPI(`/guilds/${msg.guild_id}/members/${target.id}`, 'PATCH', { communication_disabled_until: null });
-                if (res.ok) {
-                    return sendChannelMessage(msg.channel_id, `🔊 تم فك الميوت عن **${target.username}**!`);
-                }
+                if (res.ok) return sendChannelMessage(msg.channel_id, `🔊 تم فك الميوت عن **${target.username}**!`);
             }
         }
 
@@ -1015,7 +966,6 @@
             }
         }
 
-        // فحص المتجر وإرسال منشن تلقائي عند نزول عنصر جديد
         async function checkStoreForNewItems() {
             try {
                 const res = await fetch(STORE_DATA_URL + "?t=" + Date.now());
@@ -1045,22 +995,17 @@
 
                     if (botConfig.storeNotify.channelId) {
                         await sendChannelMessage(botConfig.storeNotify.channelId, `${mention} 🔥 **نزل شيء جديد في متجر ALIOPZTE!**`, embedObj);
-                        logToConsole(`🔔 تم إرسال منشن تلقائي للعنصر الجديد: ${newest.title}`, "#10b981");
                     } else if (botConfig.storeNotify.webhookUrl) {
                         await fetch(botConfig.storeNotify.webhookUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                content: `${mention} 🔥 **نزل شيء جديد في متجر ALIOPZTE!**`,
-                                embeds: embedObj
-                            })
+                            body: JSON.stringify({ content: `${mention} 🔥 **نزل شيء جديد في متجر ALIOPZTE!**`, embeds: embedObj })
                         });
                     }
                 }
             } catch (e) {}
         }
 
-        // ================= تحميل وحفظ الإعدادات =================
         async function loadConfig() {
             try {
                 const res = await fetch('bot-config.json?nocache=' + Date.now());
@@ -1155,7 +1100,7 @@
             document.getElementById('arResponse').value = '';
             renderAutoReplies();
             collectFormData();
-            logToConsole(`✅ تمت إضافة الرد التلقائي للكلمة: "${trigger}" وهو فعال الآن فوراً!`, "#10b981");
+            logToConsole(`✅ تمت إضافة الرد التلقائي للكلمة: "${trigger}"!`, "#10b981");
         }
 
         function deleteAutoReply(index) {
@@ -1212,8 +1157,8 @@
             collectFormData();
             const token = document.getElementById('githubToken').value.trim();
             if (!token) {
-                logToConsole("💾 تم حفظ الإعدادات محلياً وهي فعالة الآن!", "#10b981");
-                return alert("✅ تم تفعيل وحفظ الإعدادات في متصفحك! (لحفظها في GitHub أيضاً ضع توكن GitHub بالأعلى).");
+                logToConsole("💾 تم حفظ الإعدادات محلياً!", "#10b981");
+                return alert("✅ تم حفظ الإعدادات في متصفحك!");
             }
 
             try {
