@@ -1,0 +1,84 @@
+{
+  "prefix": "!",
+  "statusMode": "online",
+  "activityType": "PLAYING",
+  "activityText": "ALIOPZTE Store 🔥",
+  "commands": {
+    "clear": {
+      "title": "🧹 مسح الشات (Clear)",
+      "enabled": true,
+      "aliases": ["مسح", "م", "clear"]
+    },
+    "ban": {
+      "title": "🔨 حظر عضو (Ban)",
+      "enabled": true,
+      "aliases": ["باند", "ب", "ban"]
+    },
+    "kick": {
+      "title": "👢 طرد عضو (Kick)",
+      "enabled": true,
+      "aliases": ["طرد", "ط", "kick"]
+    },
+    "mute": {
+      "title": "🔇 إسكات عضو مؤقتاً (Timeout/Mute)",
+      "enabled": true,
+      "aliases": ["ميوت", "اسكت", "mute"]
+    },
+    "unmute": {
+      "title": "🔊 فك الإسكات (Unmute)",
+      "enabled": true,
+      "aliases": ["تكلم", "فك", "unmute"]
+    },
+    "lock": {
+      "title": "🔒 قفل الروم (Lock Channel)",
+      "enabled": true,
+      "aliases": ["قفل", "ق", "lock"]
+    },
+    "unlock": {
+      "title": "🔓 فتح الروم (Unlock Channel)",
+      "enabled": true,
+      "aliases": ["فتح", "ف", "unlock"]
+    },
+    "say": {
+      "title": "📢 التحدث باسم البوت (Say)",
+      "enabled": true,
+      "aliases": ["قول", "كرر", "say"]
+    },
+    "store": {
+      "title": "🛒 عرض آخر إضافات المتجر (Store)",
+      "enabled": true,
+      "aliases": ["المتجر", "متجر", "جديد"]
+    }
+  },
+  "autoReplies": [
+    {
+      "trigger": "السلام عليكم",
+      "response": "وعليكم السلام ورحمة الله وبركاته يا {user}، منور سيرفر ALIOPZTE! 🌹",
+      "matchType": "contains"
+    },
+    {
+      "trigger": "رابط المتجر",
+      "response": "🔥 تفضل رابط متجر ALIOPZTE الرسمي:\nhttps://markbrabos010-lab.github.io/ALIOPZTE-/",
+      "matchType": "contains"
+    }
+  ],
+  "automod": {
+    "antiInvite": true,
+    "antiLinks": false,
+    "antiSpam": true,
+    "badWords": []
+  },
+  "welcome": {
+    "enabled": false,
+    "channelId": "",
+    "autoRoleId": "",
+    "message": "أهلاً بك يا {user} في سيرفر ALIOPZTE الرسمي! 🎉 أنت العضو رقم {count}"
+  },
+  "logsChannelId": "",
+  "storeNotify": {
+    "enabled": true,
+    "channelId": "",
+    "mentionType": "@everyone",
+    "webhookUrl": ""
+  }
+}
