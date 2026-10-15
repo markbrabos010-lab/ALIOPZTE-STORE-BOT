@@ -114,7 +114,9 @@
     "antiInvite": true,
     "antiLinks": true,
     "antiSpam": true,
-    "badWords": []
+    "badWords": [
+      "كلب"
+    ]
   },
   "welcome": {
     "enabled": false,
