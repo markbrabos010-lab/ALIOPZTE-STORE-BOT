@@ -94,6 +94,11 @@
       "trigger": "رابط المتجر",
       "response": "🔥 تفضل رابط متجر ALIOPZTE الرسمي:\nhttps://markbrabos010-lab.github.io/ALIOPZTE-/",
       "matchType": "contains"
+    },
+    {
+      "trigger": "سلام عليكم",
+      "response": "عليكم السلام",
+      "matchType": "exact"
     }
   ],
   "automod": {
