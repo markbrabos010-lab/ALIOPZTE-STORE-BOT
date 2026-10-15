@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم البوت | ALIOPZTE Bot Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #05070e;
+            --card-bg: rgba(13, 18, 30, 0.95);
+            --main-glow: #00f2fe;
+            --purple-glow: #7f00ff;
+            --pink-glow: #ff007f;
+            --text-muted: #94a3b8;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(127, 0, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 85% 80%, rgba(0, 242, 254, 0.1) 0%, transparent 50%);
+            background-attachment: fixed;
+            color: #fff;
+            font-family: 'Tajawal', sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* شاشة تسجيل الدخول */
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #05070e; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-card { background: var(--card-bg); border: 2px solid var(--main-glow); border-radius: 20px; padding: 30px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 0 25px rgba(0, 242, 254, 0.35); }
+        .login-card i { font-size: 3rem; color: var(--main-glow); margin-bottom: 15px; }
+
+        /* الحاوية الرئيسية للوحة */
+        .dashboard-container { max-width: 1100px; margin: 0 auto; display: none; }
+        .dash-header { background: var(--card-bg); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 18px; padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; box-shadow: 0 0 20px rgba(0, 242, 254, 0.15); }
+        .dash-brand { display: flex; align-items: center; gap: 12px; font-size: 1.4rem; font-weight: 900; }
+        .dash-brand i { color: var(--main-glow); font-size: 1.8rem; filter: drop-shadow(0 0 8px var(--main-glow)); }
+
+        .token-bar { background: rgba(13, 18, 30, 0.9); border: 1px solid rgba(255, 0, 127, 0.4); border-radius: 14px; padding: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .token-bar input { flex: 1; min-width: 220px; }
+
+        /* التبويبات مثل ProBot */
+        .dash-layout { display: grid; grid-template-columns: 240px 1fr; gap: 20px; align-items: start; }
+        @media (max-width: 800px) { .dash-layout { grid-template-columns: 1fr; } }
+
+        .sidebar-nav { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .nav-btn { width: 100%; padding: 12px 14px; background: transparent; border: 1px solid transparent; color: var(--text-muted); border-radius: 12px; font-weight: 800; font-size: 0.9rem; cursor: pointer; text-align: right; display: flex; align-items: center; gap: 10px; font-family: inherit; transition: 0.25s; }
+        .nav-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-btn.active { background: linear-gradient(90deg, rgba(0,242,254,0.2), rgba(127,0,255,0.2)); border-color: var(--main-glow); color: #fff; box-shadow: 0 0 12px rgba(0,242,254,0.2); }
+        .nav-btn i { width: 20px; text-align: center; color: var(--main-glow); }
+
+        .content-panel { background: var(--card-bg); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 18px; padding: 22px; min-height: 500px; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+        .pane-title { font-size: 1.25rem; font-weight: 900; color: var(--main-glow); margin-top: 0; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        .pane-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+
+        .form-group { margin-bottom: 15px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+        label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.88rem; color: #e2e8f0; }
+        input[type="text"], input[type="password"], textarea, select {
+            width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(0,0,0,0.6); color: #fff; font-family: inherit; font-size: 0.9rem; outline: none;
+        }
+        input:focus, textarea:focus, select:focus { border-color: var(--main-glow); }
+
+        /* بطاقات أوامر الإدارة والاختصارات */
+        .cmd-card { background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+        .cmd-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+        .cmd-name { font-weight: 900; font-size: 1rem; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .cmd-badge { background: rgba(0, 242, 254, 0.15); color: var(--main-glow); padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-family: monospace; }
+
+        /* أزرار التفعيل Toggle */
+        .switch-row { display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.4); padding: 12px 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 10px; }
+        .switch-label { font-weight: 700; font-size: 0.9rem; }
+        input[type="checkbox"] { width: 20px; height: 20px; accent-color: #00f2fe; cursor: pointer; }
+
+        .btn-save { width: 100%; padding: 13px; background: linear-gradient(90deg, #00f2fe, #7f00ff, #ff007f); border: none; color: #fff; font-weight: 900; border-radius: 12px; cursor: pointer; font-size: 1rem; margin-top: 15px; font-family: inherit; transition: opacity 0.2s; }
+        .btn-save:hover { opacity: 0.92; }
+        .btn-delete { background: #ef4444; border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.8rem; font-family: inherit; }
+
+        .list-box { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px; margin-top: 15px; max-height: 280px; overflow-y: auto; }
+        .list-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: rgba(13, 18, 30, 0.85); border-radius: 8px; margin-bottom: 8px; gap: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- شاشة حماية اللوحة بكلمة مرور -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-card">
+            <i class="fa-solid fa-robot"></i>
+            <h2 style="margin-bottom: 8px;">لوحة تحكم بوت ALIOPZTE</h2>
+            <p style="color:var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">أدخل كلمة المرور للوصول لإعدادات البوت:</p>
+            <input type="password" id="passwordInput" placeholder="كلمة المرور..." style="text-align: center; font-size: 1.1rem; margin-bottom: 15px;">
+            <button onclick="checkLogin()" class="btn-save"><i class="fa-solid fa-unlock"></i> فتح لوحة البوت</button>
+            <p id="loginError" style="color:#ff4d4d; font-weight:bold; display:none; margin-top:10px;">❌ كلمة المرور غير صحيحة!</p>
+        </div>
+    </div>
+
+    <div id="dashboardContainer" class="dashboard-container">
+        <header class="dash-header">
+            <div class="dash-brand">
+                <i class="fa-solid fa-robot"></i>
+                <span>ALIOPZTE <span style="color:var(--main-glow);">BOT DASHBOARD</span></span>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <a href="https://markbrabos010-lab.github.io/ALIOPZTE-/" target="_blank" style="background:rgba(255,255,255,0.08); color:#fff; text-decoration:none; padding:8px 14px; border-radius:10px; font-size:0.85rem; font-weight:bold; border:1px solid rgba(255,255,255,0.15);">
+                    <i class="fa-solid fa-store"></i> فتح المتجر
+                </a>
+                <button onclick="saveAllToGitHub()" class="btn-save" style="margin:0; width:auto; padding:8px 18px; font-size:0.9rem;">
+                    <i class="fa-solid fa-floppy-disk"></i> حفظ جميع التغييرات
+                </button>
+            </div>
+        </header>
+
+        <!-- شريط التوكن لحفظ الإعدادات في GitHub -->
+        <div class="token-bar">
+            <label style="margin:0; white-space:nowrap;"><i class="fa-solid fa-key" style="color:#ff007f;"></i> توكن GitHub:</label>
+            <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx (يُحفظ في متصفحك تلقائياً)" oninput="localStorage.setItem('ali_bot_gh_token', this.value)">
+        </div>
+
+        <div class="dash-layout">
+            <!-- القائمة الجانبية (مثل ProBot) -->
+            <aside class="sidebar-nav">
+                <button class="nav-btn active" onclick="openTab('tab-general', this)"><i class="fa-solid fa-sliders"></i> إعدادات وحالة البوت</button>
+                <button class="nav-btn" onclick="openTab('tab-shortcuts', this)"><i class="fa-solid fa-bolt"></i> الأوامر والاختصارات</button>
+                <button class="nav-btn" onclick="openTab('tab-autoreply', this)"><i class="fa-solid fa-comments"></i> الردود التلقائية</button>
+                <button class="nav-btn" onclick="openTab('tab-automod', this)"><i class="fa-solid fa-shield-halved"></i> الحماية التلقائية</button>
+                <button class="nav-btn" onclick="openTab('tab-welcome', this)"><i class="fa-solid fa-door-open"></i> الترحيب واللوق</button>
+                <button class="nav-btn" onclick="openTab('tab-store', this)"><i class="fa-solid fa-bell"></i> منشن المتجر والإعلانات</button>
+            </aside>
+
+            <!-- محتوى التبويبات -->
+            <main class="content-panel">
+
+                <!-- 1. إعدادات وحالة البوت -->
+                <div id="tab-general" class="tab-pane active">
+                    <h3 class="pane-title"><i class="fa-solid fa-sliders"></i> الإعدادات العامة وحالة البوت (Bot Status)</h3>
+                    <p class="pane-desc">تحكم في بادئة الأوامر (Prefix) والحالة التي تظهر تحت اسم البوت في الديسكورد.</p>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>بادئة الأوامر الأساسية (Prefix):</label>
+                            <input type="text" id="cfgPrefix" placeholder="مثال: ! أو # أو -">
+                        </div>
+                        <div class="form-group">
+                            <label>حالة اتصال البوت (Presence):</label>
+                            <select id="cfgStatusMode">
+                                <option value="online">🟢 متصل (Online)</option>
+                                <option value="dnd">🔴 عدم الإزعاج (Do Not Disturb)</option>
+                                <option value="idle">🌙 خامل (Idle)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>نوع النشاط (Activity Type):</label>
+                            <select id="cfgActivityType">
+                                <option value="PLAYING">🎮 يلعب (Playing)</option>
+                                <option value="WATCHING">📺 يشاهد (Watching)</option>
+                                <option value="LISTENING">🎧 يستمع إلى (Listening)</option>
+                                <option value="COMPETING">🏆 ينافس في (Competing)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>نص الحالة الظاهر تحت البوت:</label>
+                            <input type="text" id="cfgActivityText" placeholder="مثال: ALIOPZTE Store 🔥">
+                        </div>
+                    </div>
+
+                    <button onclick="saveAllToGitHub()" class="btn-save"><i class="fa-solid fa-floppy-disk"></i> حفظ إعدادات وحالة البوت</button>
+                </div>
+
+                <!-- 2. أوامر الإدارة والاختصارات (مثل ProBot) -->
+                <div id="tab-shortcuts" class="tab-pane">
+                    <h3 class="pane-title"><i class="fa-solid fa-bolt"></i> أوامر الإدارة والاختصارات (Aliases)</h3>
+                    <p class="pane-desc">ضع الاختصارات التي تريدها لكل أمر (افصل بين كل اختصار بفاصلة <code>,</code>). يمكنك كتابة الاختصار في الشات مباشرة بدون بادئة!</p>
+
+                    <div id="commandsContainer"></div>
+
+                    <button onclick="saveAllToGitHub()" class="btn-save"><i class="fa-solid fa-floppy-disk"></i> حفظ الاختصارات وإعدادات الأوامر</button>
+                </div>
+
+                <!-- 3. الردود التلقائية -->
+                <div id="tab-autoreply" class="tab-pane">
+                    <h3 class="pane-title"><i class="fa-solid fa-comments"></i> الردود التلقائية (Auto-Responder)</h3>
+                    <p class="pane-desc">أضف كلمات أو جمل يرد عليها البوت تلقائياً في الشات فور كتابتها من أي عضو.</p>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>الكلمة أو الجملة (Trigger):</label>
+                            <input type="text" id="arTrigger" placeholder="مثال: السلام عليكم / رابط المتجر">
+                        </div>
+                        <div class="form-group">
+                            <label>شرط التطابق:</label>
+                            <select id="arMatchType">
+                                <option value="exact">مطابقة الكلمة بالضبط</option>
+                                <option value="contains">إذا كانت الرسالة تحتوي على الكلمة</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>رد البوت (يمكنك استخدام <code>{user}</code> لمنشن العضو):</label>
+                        <textarea id="arResponse" rows="2" placeholder="مثال: وعليكم السلام ورحمة الله وبركاته يا {user} 🌹"></textarea>
+                    </div>
+
+                    <button onclick="addAutoReply()" class="btn-save" style="margin-top:5px;"><i class="fa-solid fa-plus"></i> إضافة الرد التلقائي</button>
+
+                    <h4 style="margin-top:20px; margin-bottom:8px;">الردود التلقائية المضافة:</h4>
+                    <div id="autoRepliesList" class="list-box"></div>
+                </div>
+
+                <!-- 4. الحماية التلقائية -->
+                <div id="tab-automod" class="tab-pane">
+                    <h3 class="pane-title"><i class="fa-solid fa-shield-halved"></i> الحماية التلقائية للسيرفر (Auto-Mod)</h3>
+                    <p class="pane-desc">حماية الشات من الروابط، الدعوات، السبام، والكلمات الممنوعة تلقائياً (يُستثنى منها الإدارة).</p>
+
+                    <div class="switch-row">
+                        <span class="switch-label">🚫 منع نشر روابط دعوات الديسكورد (Anti-Discord Invites)</span>
+                        <input type="checkbox" id="modAntiInvite">
+                    </div>
+
+                    <div class="switch-row">
+                        <span class="switch-label">🔗 منع نشر جميع الروابط الخارجية في الشات (Anti-Links)</span>
+                        <input type="checkbox" id="modAntiLinks">
+                    </div>
+
+                    <div class="switch-row">
+                        <span class="switch-label">⚡ منع السبام وتكرار الرسائل السريع (Anti-Spam)</span>
+                        <input type="checkbox" id="modAntiSpam">
+                    </div>
+
+                    <div class="form-group" style="margin-top:15px;">
+                        <label>🤬 الكلمات الممنوعة (افصل بين كل كلمة بفاصلة <code>,</code>):</label>
+                        <textarea id="modBadWords" rows="3" placeholder="كلمة1, كلمة2, كلمة3"></textarea>
+                    </div>
+
+                    <button onclick="saveAllToGitHub()" class="btn-save"><i class="fa-solid fa-floppy-disk"></i> حفظ إعدادات الحماية</button>
+                </div>
+
+                <!-- 5. الترحيب والرتبة التلقائية واللوق -->
+                <div id="tab-welcome" class="tab-pane">
+                    <h3 class="pane-title"><i class="fa-solid fa-door-open"></i> الترحيب، الرتبة التلقائية، واللوق</h3>
+                    <p class="pane-desc">ضبط ترحيب الأعضاء الجدد، إعطائهم رتبة تلقائية، وتحديد روم سجل الأحداث (Logs).</p>
+
+                    <div class="switch-row">
+                        <span class="switch-label">👋 تفعيل رسالة الترحيب بالأعضاء الجدد</span>
+                        <input type="checkbox" id="welEnabled">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>آيدي روم الترحيب (Welcome Channel ID):</label>
+                            <input type="text" id="welChannelId" placeholder="مثال: 123456789012345678">
+                        </div>
+                        <div class="form-group">
+                            <label>آيدي الرتبة التلقائية عند الدخول (Auto-Role ID):</label>
+                            <input type="text" id="welAutoRoleId" placeholder="اختياري: آيدي رتبة العضو">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>رسالة الترحيب (استخدم <code>{user}</code> للمنشن، و<code>{count}</code> لعدد الأعضاء):</label>
+                        <textarea id="welMessage" rows="2" placeholder="أهلاً بك يا {user} في سيرفر ALIOPZTE الرسمي! 🎉 أنت العضو رقم {count}"></textarea>
+                    </div>
+
+                    <hr style="border-color:rgba(255,255,255,0.08); margin:20px 0;">
+
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-clipboard-list" style="color:var(--main-glow);"></i> آيدي روم اللوق الشامل (Logs Channel ID - يسجل الحذف والتعديل والدخول):</label>
+                        <input type="text" id="logsChannelId" placeholder="مثال: 123456789012345678">
+                    </div>
+
+                    <button onclick="saveAllToGitHub()" class="btn-save"><i class="fa-solid fa-floppy-disk"></i> حفظ إعدادات الترحيب واللوق</button>
+                </div>
+
+                <!-- 6. إشعارات ومنشن المتجر التلقائي + صانع الإعلانات -->
+                <div id="tab-store" class="tab-pane">
+                    <h3 class="pane-title"><i class="fa-solid fa-bell"></i> إشعارات متجر ALIOPZTE التلقائية</h3>
+                    <p class="pane-desc">بمجرد إضافة أي لعبة أو مود أو حلقة جديدة في المتجر، سيرسل البوت إشعاراً فخماً مع منشن تلقائياً!</p>
+
+                    <div class="switch-row">
+                        <span class="switch-label">🔔 تفعيل المنشن التلقائي عند نزول أي جديد في المتجر</span>
+                        <input type="checkbox" id="storeNotifyEnabled">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>آيدي روم أخبار المتجر (Channel ID):</label>
+                            <input type="text" id="storeChannelId" placeholder="آيدي الروم الذي سينشر فيه البوت...">
+                        </div>
+                        <div class="form-group">
+                            <label>نوع المنشن التلقائي:</label>
+                            <select id="storeMentionType">
+                                <option value="@everyone">منشن للجميع (@everyone)</option>
+                                <option value="@here">منشن للمتصلين (@here)</option>
+                                <option value="none">بدون منشن</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>رابط Webhook الروم (اختياري لإرسال إعلانات فورية من هذه اللوحة مباشرة):</label>
+                        <input type="text" id="storeWebhookUrl" placeholder="https://discord.com/api/webhooks/...">
+                    </div>
+
+                    <button onclick="saveAllToGitHub()" class="btn-save"><i class="fa-solid fa-floppy-disk"></i> حفظ إعدادات إشعارات المتجر</button>
+
+                    <hr style="border-color:rgba(255,255,255,0.08); margin:25px 0;">
+
+                    <h3 class="pane-title"><i class="fa-solid fa-bullhorn"></i> إرسال إعلان فوري للسيرفر (Embed Sender)</h3>
+                    <div class="form-group">
+                        <label>عنوان الإعلان:</label>
+                        <input type="text" id="annTitle" placeholder="🔥 تحديث جديد في متجر وسيرفر ALIOPZTE!">
+                    </div>
+                    <div class="form-group">
+                        <label>تفاصيل الإعلان:</label>
+                        <textarea id="annDesc" rows="3" placeholder="اكتب رسالتك هنا..."></textarea>
+                    </div>
+                    <button onclick="sendInstantAnnouncement()" class="btn-save" style="background:linear-gradient(90deg, #10b981, #059669);"><i class="fa-solid fa-paper-plane"></i> إرسال الإعلان الآن عبر الـ Webhook</button>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const DASH_PASSWORD = "19861986";
+        const REPO_API_URL = "https://api.github.com/repos/markbrabos010-lab/ALIOPZTE-STORE-BOT/contents/bot-config.json";
+
+        // قائمة أوامر البوت الافتراضية (على طريقة ProBot)
+        const DEFAULT_COMMANDS = {
+            clear:  { title: "🧹 مسح الشات (Clear)", enabled: true, aliases: ["مسح", "م", "clear"] },
+            ban:    { title: "🔨 حظر عضو (Ban)", enabled: true, aliases: ["باند", "ب", "ban"] },
+            kick:   { title: "👢 طرد عضو (Kick)", enabled: true, aliases: ["طرد", "ط", "kick"] },
+            mute:   { title: "🔇 إسكات عضو مؤقتاً (Timeout/Mute)", enabled: true, aliases: ["ميوت", "اسكت", "mute"] },
+            unmute: { title: "🔊 فك الإسكات (Unmute)", enabled: true, aliases: ["تكلم", "فك", "unmute"] },
+            lock:   { title: "🔒 قفل الروم (Lock Channel)", enabled: true, aliases: ["قفل", "ق", "lock"] },
+            unlock: { title: "🔓 فتح الروم (Unlock Channel)", enabled: true, aliases: ["فتح", "ف", "unlock"] },
+            say:    { title: "📢 التحدث باسم البوت (Say)", enabled: true, aliases: ["قول", "كرر", "say"] },
+            store:  { title: "🛒 عرض آخر إضافات المتجر (Store)", enabled: true, aliases: ["المتجر", "متجر", "جديد"] }
+        };
+
+        let botConfig = {
+            prefix: "!",
+            statusMode: "online",
+            activityType: "PLAYING",
+            activityText: "ALIOPZTE Store 🔥",
+            commands: DEFAULT_COMMANDS,
+            autoReplies: [],
+            automod: { antiInvite: true, antiLinks: false, antiSpam: true, badWords: [] },
+            welcome: { enabled: false, channelId: "", autoRoleId: "", message: "أهلاً بك يا {user} في سيرفر ALIOPZTE الرسمي! 🎉 أنت العضو رقم {count}" },
+            logsChannelId: "",
+            storeNotify: { enabled: true, channelId: "", mentionType: "@everyone", webhookUrl: "" }
+        };
+
+        function checkLogin() {
+            const val = document.getElementById('passwordInput').value.trim();
+            if (val === DASH_PASSWORD) {
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('dashboardContainer').style.display = 'block';
+                const savedToken = localStorage.getItem('ali_bot_gh_token');
+                if (savedToken) document.getElementById('githubToken').value = savedToken;
+                loadConfig();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        function openTab(tabId, btn) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        async function loadConfig() {
+            try {
+                const res = await fetch('bot-config.json?nocache=' + Date.now());
+                if (res.ok) {
+                    const data = await res.json();
+                    botConfig = Object.assign(botConfig, data);
+                    botConfig.commands = Object.assign({}, DEFAULT_COMMANDS, data.commands || {});
+                }
+            } catch (e) {}
+            populateUI();
+        }
+
+        function populateUI() {
+            document.getElementById('cfgPrefix').value = botConfig.prefix || "!";
+            document.getElementById('cfgStatusMode').value = botConfig.statusMode || "online";
+            document.getElementById('cfgActivityType').value = botConfig.activityType || "PLAYING";
+            document.getElementById('cfgActivityText').value = botConfig.activityText || "ALIOPZTE Store 🔥";
+
+            renderCommands();
+            renderAutoReplies();
+
+            document.getElementById('modAntiInvite').checked = !!(botConfig.automod && botConfig.automod.antiInvite);
+            document.getElementById('modAntiLinks').checked = !!(botConfig.automod && botConfig.automod.antiLinks);
+            document.getElementById('modAntiSpam').checked = !!(botConfig.automod && botConfig.automod.antiSpam);
+            document.getElementById('modBadWords').value = (botConfig.automod && botConfig.automod.badWords) ? botConfig.automod.badWords.join(', ') : '';
+
+            document.getElementById('welEnabled').checked = !!(botConfig.welcome && botConfig.welcome.enabled);
+            document.getElementById('welChannelId').value = (botConfig.welcome && botConfig.welcome.channelId) || '';
+            document.getElementById('welAutoRoleId').value = (botConfig.welcome && botConfig.welcome.autoRoleId) || '';
+            document.getElementById('welMessage').value = (botConfig.welcome && botConfig.welcome.message) || '';
+            document.getElementById('logsChannelId').value = botConfig.logsChannelId || '';
+
+            document.getElementById('storeNotifyEnabled').checked = !!(botConfig.storeNotify && botConfig.storeNotify.enabled);
+            document.getElementById('storeChannelId').value = (botConfig.storeNotify && botConfig.storeNotify.channelId) || '';
+            document.getElementById('storeMentionType').value = (botConfig.storeNotify && botConfig.storeNotify.mentionType) || '@everyone';
+            document.getElementById('storeWebhookUrl').value = (botConfig.storeNotify && botConfig.storeNotify.webhookUrl) || '';
+        }
+
+        function renderCommands() {
+            const container = document.getElementById('commandsContainer');
+            container.innerHTML = '';
+            Object.keys(DEFAULT_COMMANDS).forEach(key => {
+                const cmd = botConfig.commands[key] || DEFAULT_COMMANDS[key];
+                container.innerHTML += `
+                    <div class="cmd-card">
+                        <div class="cmd-header">
+                            <div class="cmd-name">
+                                <span>${DEFAULT_COMMANDS[key].title}</span>
+                                <span class="cmd-badge">${key}</span>
+                            </div>
+                            <label style="margin:0; display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                <span style="font-size:0.8rem; color:var(--text-muted);">مفعل</span>
+                                <input type="checkbox" id="cmd_enable_${key}" ${cmd.enabled ? 'checked' : ''}>
+                            </label>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-size:0.8rem; color:#cbd5e1;">الاختصارات (Aliases) مفصولة بفاصلة:</label>
+                            <input type="text" id="cmd_aliases_${key}" value="${(cmd.aliases || []).join(', ')}" placeholder="مثال: م, مسح, clear">
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderAutoReplies() {
+            const box = document.getElementById('autoRepliesList');
+            if (!botConfig.autoReplies || botConfig.autoReplies.length === 0) {
+                box.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:0.85rem;">لا توجد ردود تلقائية مضافة حتى الآن.</p>';
+                return;
+            }
+            box.innerHTML = botConfig.autoReplies.map((r, i) => `
+                <div class="list-item">
+                    <div>
+                        <b style="color:var(--main-glow);">${r.trigger}</b> 
+                        <span style="font-size:0.75rem; color:var(--text-muted);">(${r.matchType === 'exact' ? 'مطابق' : 'يحتوي'})</span>
+                        <div style="font-size:0.85rem; color:#cbd5e1; margin-top:3px;">⬅️ ${r.response}</div>
+                    </div>
+                    <button class="btn-delete" onclick="deleteAutoReply(${i})">حذف</button>
+                </div>
+            `).join('');
+        }
+
+        function addAutoReply() {
+            const trigger = document.getElementById('arTrigger').value.trim();
+            const response = document.getElementById('arResponse').value.trim();
+            const matchType = document.getElementById('arMatchType').value;
+            if (!trigger || !response) return alert("يرجى كتابة الكلمة ورد البوت!");
+
+            if (!botConfig.autoReplies) botConfig.autoReplies = [];
+            botConfig.autoReplies.push({ trigger, response, matchType });
+            document.getElementById('arTrigger').value = '';
+            document.getElementById('arResponse').value = '';
+            renderAutoReplies();
+            saveAllToGitHub();
+        }
+
+        function deleteAutoReply(index) {
+            botConfig.autoReplies.splice(index, 1);
+            renderAutoReplies();
+            saveAllToGitHub();
+        }
+
+        function collectFormData() {
+            botConfig.prefix = document.getElementById('cfgPrefix').value.trim() || "!";
+            botConfig.statusMode = document.getElementById('cfgStatusMode').value;
+            botConfig.activityType = document.getElementById('cfgActivityType').value;
+            botConfig.activityText = document.getElementById('cfgActivityText').value.trim();
+
+            Object.keys(DEFAULT_COMMANDS).forEach(key => {
+                const enabledEl = document.getElementById(`cmd_enable_${key}`);
+                const aliasesEl = document.getElementById(`cmd_aliases_${key}`);
+                if (enabledEl && aliasesEl) {
+                    botConfig.commands[key] = {
+                        title: DEFAULT_COMMANDS[key].title,
+                        enabled: enabledEl.checked,
+                        aliases: aliasesEl.value.split(',').map(s => s.trim()).filter(Boolean)
+                    };
+                }
+            });
+
+            botConfig.automod = {
+                antiInvite: document.getElementById('modAntiInvite').checked,
+                antiLinks: document.getElementById('modAntiLinks').checked,
+                antiSpam: document.getElementById('modAntiSpam').checked,
+                badWords: document.getElementById('modBadWords').value.split(',').map(s => s.trim()).filter(Boolean)
+            };
+
+            botConfig.welcome = {
+                enabled: document.getElementById('welEnabled').checked,
+                channelId: document.getElementById('welChannelId').value.trim(),
+                autoRoleId: document.getElementById('welAutoRoleId').value.trim(),
+                message: document.getElementById('welMessage').value.trim()
+            };
+
+            botConfig.logsChannelId = document.getElementById('logsChannelId').value.trim();
+
+            botConfig.storeNotify = {
+                enabled: document.getElementById('storeNotifyEnabled').checked,
+                channelId: document.getElementById('storeChannelId').value.trim(),
+                mentionType: document.getElementById('storeMentionType').value,
+                webhookUrl: document.getElementById('storeWebhookUrl').value.trim()
+            };
+        }
+
+        async function saveAllToGitHub() {
+            const token = document.getElementById('githubToken').value.trim();
+            if (!token) return alert("⚠️ يرجى إدخال توكن GitHub في الشريط العلوي لحفظ إعدادات البوت!");
+
+            collectFormData();
+
+            try {
+                let sha = undefined;
+                const getRes = await fetch(REPO_API_URL, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                if (getRes.ok) {
+                    const fileData = await getRes.json();
+                    sha = fileData.sha;
+                }
+
+                const putRes = await fetch(REPO_API_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: "تحديث إعدادات البوت من اللوحة",
+                        content: btoa(unescape(encodeURIComponent(JSON.stringify(botConfig, null, 2)))),
+                        sha: sha
+                    })
+                });
+
+                if (putRes.ok) {
+                    alert("✅ تم حفظ إعدادات واختصارات البوت بنجاح! سيقرأها البوت تلقائياً.");
+                } else {
+                    alert("❌ فشل الحفظ: تأكد من صحة توكن GitHub وصلاحية repo.");
+                }
+            } catch (e) {
+                alert("❌ حدث خطأ في الاتصال بـ GitHub.");
+            }
+        }
+
+        async function sendInstantAnnouncement() {
+            const webhook = document.getElementById('storeWebhookUrl').value.trim();
+            const title = document.getElementById('annTitle').value.trim();
+            const desc = document.getElementById('annDesc').value.trim();
+            const mention = document.getElementById('storeMentionType').value;
+
+            if (!webhook) return alert("⚠️ ضع رابط الـ Webhook أولاً في خانة Webhook الروم بالأعلى!");
+            if (!title || !desc) return alert("⚠️ اكتب عنوان وتفاصيل الإعلان!");
+
+            try {
+                await fetch(webhook, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: mention !== 'none' ? mention : '',
+                        embeds: [{
+                            title: title,
+                            description: desc,
+                            color: 65534,
+                            timestamp: new Date().toISOString(),
+                            footer: { text: "ALIOPZTE Bot System" }
+                        }]
+                    })
+                });
+                alert("🚀 تم إرسال الإعلان إلى الديسكورد بنجاح!");
+                document.getElementById('annTitle').value = '';
+                document.getElementById('annDesc').value = '';
+            } catch (e) {
+                alert("❌ تعذر إرسال الإعلان، تأكد من رابط الـ Webhook.");
+            }
+        }
+    </script>
+</body>
+</html>
