@@ -35,13 +35,24 @@
         .login-card i { font-size: 3rem; color: var(--main-glow); margin-bottom: 15px; }
 
         /* الحاوية الرئيسية للوحة */
-        .dashboard-container { max-width: 1100px; margin: 0 auto; display: none; }
-        .dash-header { background: var(--card-bg); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 18px; padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; box-shadow: 0 0 20px rgba(0, 242, 254, 0.15); }
-        .dash-brand { display: flex; align-items: center; gap: 12px; font-size: 1.4rem; font-weight: 900; }
+        .dashboard-container { max-width: 1120px; margin: 0 auto; display: none; }
+        .dash-header { background: var(--card-bg); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 18px; padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 18px; box-shadow: 0 0 20px rgba(0, 242, 254, 0.15); }
+        .dash-brand { display: flex; align-items: center; gap: 12px; font-size: 1.35rem; font-weight: 900; }
         .dash-brand i { color: var(--main-glow); font-size: 1.8rem; filter: drop-shadow(0 0 8px var(--main-glow)); }
 
-        .token-bar { background: rgba(13, 18, 30, 0.9); border: 1px solid rgba(255, 0, 127, 0.4); border-radius: 14px; padding: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .token-bar input { flex: 1; min-width: 220px; }
+        /* صندوق التوكنات والتشغيل المباشر */
+        .tokens-box { background: rgba(13, 18, 30, 0.92); border: 2px solid var(--main-glow); border-radius: 16px; padding: 18px; margin-bottom: 20px; box-shadow: 0 0 20px rgba(0, 242, 254, 0.12); }
+        .tokens-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 768px) { .tokens-grid { grid-template-columns: 1fr; } }
+
+        .bot-control-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.08); }
+        .status-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 20px; font-weight: 900; font-size: 0.85rem; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5; }
+        .status-badge.online { background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #6ee7b7; }
+
+        .btn-run-bot { padding: 10px 20px; border-radius: 10px; border: none; font-weight: 900; font-size: 0.9rem; cursor: pointer; font-family: inherit; background: linear-gradient(90deg, #10b981, #059669); color: #fff; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+        .btn-stop-bot { padding: 10px 18px; border-radius: 10px; border: none; font-weight: 900; font-size: 0.9rem; cursor: pointer; font-family: inherit; background: #ef4444; color: #fff; display: none; align-items: center; gap: 8px; }
+
+        .live-console { background: #020408; border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-family: monospace; font-size: 0.82rem; color: #38bdf8; max-height: 110px; overflow-y: auto; line-height: 1.6; }
 
         /* التبويبات مثل ProBot */
         .dash-layout { display: grid; grid-template-columns: 240px 1fr; gap: 20px; align-items: start; }
@@ -113,15 +124,45 @@
                     <i class="fa-solid fa-store"></i> فتح المتجر
                 </a>
                 <button onclick="saveAllToGitHub()" class="btn-save" style="margin:0; width:auto; padding:8px 18px; font-size:0.9rem;">
-                    <i class="fa-solid fa-floppy-disk"></i> حفظ جميع التغييرات
+                    <i class="fa-solid fa-floppy-disk"></i> حفظ جميع الإعدادات
                 </button>
             </div>
         </header>
 
-        <!-- شريط التوكن لحفظ الإعدادات في GitHub -->
-        <div class="token-bar">
-            <label style="margin:0; white-space:nowrap;"><i class="fa-solid fa-key" style="color:#ff007f;"></i> توكن GitHub:</label>
-            <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx (يُحفظ في متصفحك تلقائياً)" oninput="localStorage.setItem('ali_bot_gh_token', this.value)">
+        <!-- صندوق التوكنات وتشغيل البوت مباشرة من داخل الموقع -->
+        <div class="tokens-box">
+            <div class="tokens-grid">
+                <div>
+                    <label><i class="fa-brands fa-discord" style="color:#5865F2;"></i> توكن البوت (Discord Bot Token):</label>
+                    <input type="password" id="discordBotToken" placeholder="ضع توكن البوت هنا لتشغيله من الموقع..." oninput="localStorage.setItem('ali_discord_bot_token', this.value.trim())">
+                </div>
+                <div>
+                    <label><i class="fa-solid fa-key" style="color:#ff007f;"></i> توكن GitHub (لحفظ الإعدادات):</label>
+                    <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" oninput="localStorage.setItem('ali_bot_gh_token', this.value.trim())">
+                </div>
+            </div>
+
+            <div class="bot-control-bar">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <div id="botStatusBadge" class="status-badge">
+                        <i class="fa-solid fa-circle"></i> <span id="botStatusText">البوت متوقف حالياً</span>
+                    </div>
+                    <span id="botNameDisplay" style="font-size:0.85rem; color:#cbd5e1; font-weight:bold;"></span>
+                </div>
+
+                <div style="display:flex; gap:8px;">
+                    <button id="btnStartBot" onclick="startBotFromBrowser()" class="btn-run-bot">
+                        <i class="fa-solid fa-power-off"></i> تشغيل البوت الآن من الموقع 🟢
+                    </button>
+                    <button id="btnStopBot" onclick="stopBotFromBrowser()" class="btn-stop-bot">
+                        <i class="fa-solid fa-stop"></i> إيقاف البوت 🔴
+                    </button>
+                </div>
+            </div>
+
+            <div id="liveConsole" class="live-console">
+                [النظام]: ضع توكن البوت في الخانة بالأعلى ثم اضغط "تشغيل البوت الآن من الموقع" ليصبح متصلاً (Online) في سيرفرك فوراً!
+            </div>
         </div>
 
         <div class="dash-layout">
@@ -141,7 +182,7 @@
                 <!-- 1. إعدادات وحالة البوت -->
                 <div id="tab-general" class="tab-pane active">
                     <h3 class="pane-title"><i class="fa-solid fa-sliders"></i> الإعدادات العامة وحالة البوت (Bot Status)</h3>
-                    <p class="pane-desc">تحكم في بادئة الأوامر (Prefix) والحالة التي تظهر تحت اسم البوت في الديسكورد.</p>
+                    <p class="pane-desc">تحكم في بادئة الأوامر (Prefix) والحالة التي تظهر تحت اسم البوت في الديسكورد لحظياً.</p>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -150,7 +191,7 @@
                         </div>
                         <div class="form-group">
                             <label>حالة اتصال البوت (Presence):</label>
-                            <select id="cfgStatusMode">
+                            <select id="cfgStatusMode" onchange="updateLivePresence()">
                                 <option value="online">🟢 متصل (Online)</option>
                                 <option value="dnd">🔴 عدم الإزعاج (Do Not Disturb)</option>
                                 <option value="idle">🌙 خامل (Idle)</option>
@@ -161,7 +202,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>نوع النشاط (Activity Type):</label>
-                            <select id="cfgActivityType">
+                            <select id="cfgActivityType" onchange="updateLivePresence()">
                                 <option value="PLAYING">🎮 يلعب (Playing)</option>
                                 <option value="WATCHING">📺 يشاهد (Watching)</option>
                                 <option value="LISTENING">🎧 يستمع إلى (Listening)</option>
@@ -170,11 +211,11 @@
                         </div>
                         <div class="form-group">
                             <label>نص الحالة الظاهر تحت البوت:</label>
-                            <input type="text" id="cfgActivityText" placeholder="مثال: ALIOPZTE Store 🔥">
+                            <input type="text" id="cfgActivityText" placeholder="مثال: ALIOPZTE Store 🔥" oninput="updateLivePresence()">
                         </div>
                     </div>
 
-                    <button onclick="saveAllToGitHub()" class="btn-save"><i class="fa-solid fa-floppy-disk"></i> حفظ إعدادات وحالة البوت</button>
+                    <button onclick="updateLivePresence(); saveAllToGitHub();" class="btn-save"><i class="fa-solid fa-floppy-disk"></i> تحديث الحالة فوراً وحفظ الإعدادات</button>
                 </div>
 
                 <!-- 2. أوامر الإدارة والاختصارات (مثل ProBot) -->
@@ -274,7 +315,7 @@
                     <hr style="border-color:rgba(255,255,255,0.08); margin:20px 0;">
 
                     <div class="form-group">
-                        <label><i class="fa-solid fa-clipboard-list" style="color:var(--main-glow);"></i> آيدي روم اللوق الشامل (Logs Channel ID - يسجل الحذف والتعديل والدخول):</label>
+                        <label><i class="fa-solid fa-clipboard-list" style="color:var(--main-glow);"></i> آيدي روم اللوق الشامل (Logs Channel ID):</label>
                         <input type="text" id="logsChannelId" placeholder="مثال: 123456789012345678">
                     </div>
 
@@ -307,7 +348,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label>رابط Webhook الروم (اختياري لإرسال إعلانات فورية من هذه اللوحة مباشرة):</label>
+                        <label>رابط Webhook الروم (لإرسال إشعارات المتجر والإعلانات مباشرة من المتصفح):</label>
                         <input type="text" id="storeWebhookUrl" placeholder="https://discord.com/api/webhooks/...">
                     </div>
 
@@ -324,7 +365,7 @@
                         <label>تفاصيل الإعلان:</label>
                         <textarea id="annDesc" rows="3" placeholder="اكتب رسالتك هنا..."></textarea>
                     </div>
-                    <button onclick="sendInstantAnnouncement()" class="btn-save" style="background:linear-gradient(90deg, #10b981, #059669);"><i class="fa-solid fa-paper-plane"></i> إرسال الإعلان الآن عبر الـ Webhook</button>
+                    <button onclick="sendInstantAnnouncement()" class="btn-save" style="background:linear-gradient(90deg, #10b981, #059669);"><i class="fa-solid fa-paper-plane"></i> إرسال الإعلان الآن</button>
                 </div>
 
             </main>
@@ -334,8 +375,9 @@
     <script>
         const DASH_PASSWORD = "19861986";
         const REPO_API_URL = "https://api.github.com/repos/markbrabos010-lab/ALIOPZTE-STORE-BOT/contents/bot-config.json";
+        const STORE_DATA_URL = "https://raw.githubusercontent.com/markbrabos010-lab/ALIOPZTE-/main/data.json";
+        const STORE_WEB_URL = "https://markbrabos010-lab.github.io/ALIOPZTE-/";
 
-        // قائمة أوامر البوت الافتراضية (على طريقة ProBot)
         const DEFAULT_COMMANDS = {
             clear:  { title: "🧹 مسح الشات (Clear)", enabled: true, aliases: ["مسح", "م", "clear"] },
             ban:    { title: "🔨 حظر عضو (Ban)", enabled: true, aliases: ["باند", "ب", "ban"] },
@@ -361,13 +403,31 @@
             storeNotify: { enabled: true, channelId: "", mentionType: "@everyone", webhookUrl: "" }
         };
 
+        // متغيرات تشغيل البوت مباشرة من المتصفح عبر Discord Gateway
+        let gatewayWs = null;
+        let heartbeatInterval = null;
+        let storeWatchInterval = null;
+        let lastStoreItemId = null;
+
+        function logToConsole(msg, color = "#38bdf8") {
+            const box = document.getElementById('liveConsole');
+            const time = new Date().toLocaleTimeString('ar-EG');
+            box.innerHTML += `<div style="color:${color};">[${time}] ${msg}</div>`;
+            box.scrollTop = box.scrollHeight;
+        }
+
         function checkLogin() {
             const val = document.getElementById('passwordInput').value.trim();
             if (val === DASH_PASSWORD) {
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('dashboardContainer').style.display = 'block';
-                const savedToken = localStorage.getItem('ali_bot_gh_token');
-                if (savedToken) document.getElementById('githubToken').value = savedToken;
+                
+                const savedGhToken = localStorage.getItem('ali_bot_gh_token');
+                if (savedGhToken) document.getElementById('githubToken').value = savedGhToken;
+
+                const savedBotToken = localStorage.getItem('ali_discord_bot_token');
+                if (savedBotToken) document.getElementById('discordBotToken').value = savedBotToken;
+
                 loadConfig();
             } else {
                 document.getElementById('loginError').style.display = 'block';
@@ -381,6 +441,167 @@
             btn.classList.add('active');
         }
 
+        // ================= تشغيل البوت مباشرة من داخل الموقع (Discord WebSocket Gateway) =================
+        function getActivityTypeNum(typeStr) {
+            const map = { PLAYING: 0, LISTENING: 2, WATCHING: 3, COMPETING: 5 };
+            return map[typeStr] ?? 0;
+        }
+
+        function startBotFromBrowser() {
+            const botToken = document.getElementById('discordBotToken').value.trim();
+            if (!botToken) {
+                alert("⚠️ يرجى وضع توكن البوت (Discord Bot Token) في الخانة المخصصة بالأعلى أولاً!");
+                return;
+            }
+
+            if (gatewayWs) {
+                gatewayWs.close();
+            }
+
+            logToConsole("⏳ جاري الاتصال ببوابة ديسكورد وتشغيل البوت...", "#f59e0b");
+            gatewayWs = new WebSocket("wss://gateway.discord.gg/?v=10&encoding=json");
+
+            gatewayWs.onmessage = (event) => {
+                const payload = JSON.parse(event.data);
+                const { op, d, t } = payload;
+
+                // op 10: Hello -> بدء نبضات القلب وإرسال التوكن (Identify)
+                if (op === 10) {
+                    const interval = d.heartbeat_interval;
+                    if (heartbeatInterval) clearInterval(heartbeatInterval);
+                    heartbeatInterval = setInterval(() => {
+                        if (gatewayWs && gatewayWs.readyState === WebSocket.OPEN) {
+                            gatewayWs.send(JSON.stringify({ op: 1, d: null }));
+                        }
+                    }, interval);
+
+                    collectFormData();
+                    gatewayWs.send(JSON.stringify({
+                        op: 2,
+                        d: {
+                            token: botToken,
+                            intents: 33283,
+                            properties: { os: "linux", browser: "chrome", device: "aliopzte-dashboard" },
+                            presence: {
+                                status: botConfig.statusMode || "online",
+                                activities: [{
+                                    name: botConfig.activityText || "ALIOPZTE Store 🔥",
+                                    type: getActivityTypeNum(botConfig.activityType)
+                                }],
+                                afk: false
+                            }
+                        }
+                    }));
+                }
+
+                // حدث جاهزية البوت (READY)
+                if (t === "READY") {
+                    const botUser = d.user;
+                    document.getElementById('botStatusBadge').classList.add('online');
+                    document.getElementById('botStatusText').innerText = "البوت متصل الآن (Online 🟢)";
+                    document.getElementById('botNameDisplay').innerText = `🤖 ${botUser.username}#${botUser.discriminator}`;
+                    document.getElementById('btnStartBot').style.display = 'none';
+                    document.getElementById('btnStopBot').style.display = 'inline-flex';
+                    logToConsole(`✅ تم تشغيل البوت بنجاح باسم: ${botUser.username}! البوت الآن Online في سيرفرك.`, "#10b981");
+
+                    // تفعيل مراقبة المتجر التلقائية
+                    if (storeWatchInterval) clearInterval(storeWatchInterval);
+                    checkStoreForNewItems();
+                    storeWatchInterval = setInterval(checkStoreForNewItems, 30000);
+                }
+
+                // مراقبة الرسائل في السيرفر وعرضها في الكونسول
+                if (t === "MESSAGE_CREATE" && d && !d.author?.bot) {
+                    logToConsole(`💬 [${d.author.username}]: ${d.content}`, "#cbd5e1");
+                }
+            };
+
+            gatewayWs.onclose = (ev) => {
+                if (heartbeatInterval) clearInterval(heartbeatInterval);
+                if (storeWatchInterval) clearInterval(storeWatchInterval);
+                document.getElementById('botStatusBadge').classList.remove('online');
+                document.getElementById('botStatusText').innerText = "البوت متوقف حالياً";
+                document.getElementById('botNameDisplay').innerText = "";
+                document.getElementById('btnStartBot').style.display = 'inline-flex';
+                document.getElementById('btnStopBot').style.display = 'none';
+
+                if (ev.code === 4004) {
+                    logToConsole("❌ خطأ: توكن البوت غير صحيح! تأكد من نسخ التوكن الصحيح من موقع Discord Developer Portal.", "#ef4444");
+                    alert("❌ توكن البوت غير صحيح!");
+                } else if (ev.code === 4014) {
+                    logToConsole("⚠️ تنبيه: يجب تفعيل الخيارات الثلاثة (Privileged Gateway Intents) من صفحة Bot في موقع ديسكورد!", "#f59e0b");
+                } else {
+                    logToConsole("🔴 تم قطع اتصال البوت.", "#ef4444");
+                }
+            };
+        }
+
+        function stopBotFromBrowser() {
+            if (gatewayWs) {
+                gatewayWs.close();
+                gatewayWs = null;
+            }
+        }
+
+        function updateLivePresence() {
+            collectFormData();
+            if (gatewayWs && gatewayWs.readyState === WebSocket.OPEN) {
+                gatewayWs.send(JSON.stringify({
+                    op: 3,
+                    d: {
+                        since: null,
+                        status: botConfig.statusMode || "online",
+                        activities: [{
+                            name: botConfig.activityText || "ALIOPZTE Store 🔥",
+                            type: getActivityTypeNum(botConfig.activityType)
+                        }],
+                        afk: false
+                    }
+                }));
+                logToConsole(`⚡ تم تحديث حالة البوت مباشرة إلى: ${botConfig.activityText} (${botConfig.statusMode})`, "#00f2fe");
+            }
+        }
+
+        // فحص المتجر وإرسال منشن تلقائي عند نزول عنصر جديد
+        async function checkStoreForNewItems() {
+            try {
+                const res = await fetch(STORE_DATA_URL + "?t=" + Date.now());
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data.items || data.items.length === 0) return;
+
+                const newest = data.items[0];
+                if (lastStoreItemId === null) {
+                    lastStoreItemId = newest.id;
+                    return;
+                }
+
+                if (newest.id !== lastStoreItemId) {
+                    lastStoreItemId = newest.id;
+                    collectFormData();
+                    if (botConfig.storeNotify.enabled && botConfig.storeNotify.webhookUrl) {
+                        const itemUrl = `${STORE_WEB_URL}?id=${newest.id}`;
+                        const mention = botConfig.storeNotify.mentionType !== 'none' ? botConfig.storeNotify.mentionType : '';
+                        await fetch(botConfig.storeNotify.webhookUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                content: `${mention} 🔥 **نزل شيء جديد في متجر ALIOPZTE!**`,
+                                embeds: [{
+                                    title: `🆕 ${newest.title}`,
+                                    description: `${newest.desc || 'متوفر الآن للتحميل في المتجر!'}\n\n📥 **[اضغط هنا للفتح والتحميل مباشرة](${itemUrl})**`,
+                                    color: 65534,
+                                    timestamp: new Date().toISOString()
+                                }]
+                            })
+                        });
+                        logToConsole(`🔔 تم إرسال منشن تلقائي للعنصر الجديد: ${newest.title}`, "#10b981");
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // ================= تحميل وحفظ الإعدادات في GitHub =================
         async function loadConfig() {
             try {
                 const res = await fetch('bot-config.json?nocache=' + Date.now());
@@ -527,7 +748,7 @@
 
         async function saveAllToGitHub() {
             const token = document.getElementById('githubToken').value.trim();
-            if (!token) return alert("⚠️ يرجى إدخال توكن GitHub في الشريط العلوي لحفظ إعدادات البوت!");
+            if (!token) return alert("⚠️ يرجى إدخال توكن GitHub في الخانة العلوية لحفظ الإعدادات!");
 
             collectFormData();
 
@@ -555,9 +776,10 @@
                 });
 
                 if (putRes.ok) {
-                    alert("✅ تم حفظ إعدادات واختصارات البوت بنجاح! سيقرأها البوت تلقائياً.");
+                    logToConsole("💾 تم حفظ جميع الإعدادات والاختصارات في GitHub بنجاح!", "#10b981");
+                    alert("✅ تم حفظ الإعدادات بنجاح!");
                 } else {
-                    alert("❌ فشل الحفظ: تأكد من صحة توكن GitHub وصلاحية repo.");
+                    alert("❌ فشل الحفظ: تأكد من صحة توكن GitHub.");
                 }
             } catch (e) {
                 alert("❌ حدث خطأ في الاتصال بـ GitHub.");
