@@ -5,50 +5,14 @@
   "activityText": "ALIOPZTE Store 🔥",
   "commands": {
     "clear": {
-      "title": "🧹 مسح الشات (Clear)",
+      "title": "🧹 مسح الشات (/clear)",
       "enabled": true,
       "aliases": [
         "مسح"
       ]
     },
-    "ban": {
-      "title": "🔨 حظر عضو (Ban)",
-      "enabled": true,
-      "aliases": [
-        "باند",
-        "ب",
-        "ban"
-      ]
-    },
-    "kick": {
-      "title": "👢 طرد عضو (Kick)",
-      "enabled": true,
-      "aliases": [
-        "طرد",
-        "ط",
-        "kick"
-      ]
-    },
-    "mute": {
-      "title": "🔇 إسكات عضو مؤقتاً (Timeout/Mute)",
-      "enabled": true,
-      "aliases": [
-        "ميوت",
-        "اسكت",
-        "mute"
-      ]
-    },
-    "unmute": {
-      "title": "🔊 فك الإسكات (Unmute)",
-      "enabled": true,
-      "aliases": [
-        "تكلم",
-        "فك",
-        "unmute"
-      ]
-    },
     "lock": {
-      "title": "🔒 قفل الروم (Lock Channel)",
+      "title": "🔒 قفل الروم (/lock)",
       "enabled": true,
       "aliases": [
         "قفل",
@@ -57,7 +21,7 @@
       ]
     },
     "unlock": {
-      "title": "🔓 فتح الروم (Unlock Channel)",
+      "title": "🔓 فتح الروم (/unlock)",
       "enabled": true,
       "aliases": [
         "فتح",
@@ -65,8 +29,44 @@
         "unlock"
       ]
     },
+    "ban": {
+      "title": "🔨 حظر عضو (/ban)",
+      "enabled": true,
+      "aliases": [
+        "باند",
+        "ب",
+        "ban"
+      ]
+    },
+    "kick": {
+      "title": "👢 طرد عضو (/kick)",
+      "enabled": true,
+      "aliases": [
+        "طرد",
+        "ط",
+        "kick"
+      ]
+    },
+    "mute": {
+      "title": "🔇 إسكات عضو (/mute)",
+      "enabled": true,
+      "aliases": [
+        "ميوت",
+        "اسكت",
+        "mute"
+      ]
+    },
+    "unmute": {
+      "title": "🔊 فك الإسكات (/unmute)",
+      "enabled": true,
+      "aliases": [
+        "تكلم",
+        "فك",
+        "unmute"
+      ]
+    },
     "say": {
-      "title": "📢 التحدث باسم البوت (Say)",
+      "title": "📢 التحدث باسم البوت (/say)",
       "enabled": true,
       "aliases": [
         "قول",
@@ -75,12 +75,21 @@
       ]
     },
     "store": {
-      "title": "🛒 عرض آخر إضافات المتجر (Store)",
+      "title": "🛒 عرض المتجر (/store)",
       "enabled": true,
       "aliases": [
         "المتجر",
         "متجر",
         "جديد"
+      ]
+    },
+    "ping": {
+      "title": "⚡ سرعة استجابة البوت (/ping)",
+      "enabled": true,
+      "aliases": [
+        "بنق",
+        "بنج",
+        "ping"
       ]
     }
   },
