@@ -1,53 +1,77 @@
-const { 
-    Client, 
-    GatewayIntentBits, 
-    Partials, 
-    EmbedBuilder, 
-    PermissionsBitField, 
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const {
+    Client,
+    GatewayIntentBits,
+    Partials,
+    EmbedBuilder,
+    PermissionsBitField,
     ActivityType,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle
+    REST,
+    Routes
 } = require('discord.js');
 
-const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildModeration
-    ],
-    partials: [Partials.Message, Partials.Channel, Partials.GuildMember]
-});
-
-// ضع توكن البوت الخاص بك هنا (أو في متغير البيئة DISCORD_TOKEN في الاستضافة)
-const BOT_TOKEN = process.env.DISCORD_TOKEN || "PUT_YOUR_BOT_TOKEN_HERE";
-
-// روابط قراءة إعدادات لوحة البوت وبيانات المتجر من GitHub مباشرة
 const CONFIG_URL = "https://raw.githubusercontent.com/markbrabos010-lab/ALIOPZTE-STORE-BOT/main/bot-config.json";
 const STORE_DATA_URL = "https://raw.githubusercontent.com/markbrabos010-lab/ALIOPZTE-/main/data.json";
 const STORE_WEB_URL = "https://markbrabos010-lab.github.io/ALIOPZTE-/";
 
-let config = null;
-let lastKnownItemId = null;
-const spamTracker = new Map();
+let botToken = process.env.DISCORD_TOKEN || "";
+let client = null;
+let isBotOnline = false;
+let botUsername = "";
+let lastStoreItemId = null;
+let logsBuffer = ["[النظام]: سيرفر Render جاهز ومتصل 100%!"];
 
-// 1. جلب وتحديث الإعدادات من لوحة التحكم تلقائياً كل 20 ثانية
-async function syncConfig() {
+let config = {
+    prefix: "!",
+    statusMode: "online",
+    activityType: "PLAYING",
+    activityText: "ALIOPZTE Store 🔥",
+    commands: {
+        clear:  { enabled: true, aliases: ["مسح", "م", "clear"] },
+        lock:   { enabled: true, aliases: ["قفل", "ق", "lock"] },
+        unlock: { enabled: true, aliases: ["فتح", "ف", "unlock"] },
+        ban:    { enabled: true, aliases: ["باند", "ب", "ban"] },
+        kick:   { enabled: true, aliases: ["طرد", "ط", "kick"] },
+        mute:   { enabled: true, aliases: ["ميوت", "اسكت", "mute"] },
+        unmute: { enabled: true, aliases: ["تكلم", "فك", "unmute"] },
+        say:    { enabled: true, aliases: ["قول", "كرر", "say"] },
+        store:  { enabled: true, aliases: ["المتجر", "متجر", "جديد", "store"] },
+        ping:   { enabled: true, aliases: ["بنق", "بنج", "ping"] }
+    },
+    autoReplies: [
+        { trigger: "سلام عليكم", response: "وعليكم السلام ورحمة الله وبركاته يا {user}، منور سيرفر ALIOPZTE! 🌹", matchType: "contains" },
+        { trigger: "السلام عليكم", response: "وعليكم السلام ورحمة الله وبركاته يا {user}، منور سيرفر ALIOPZTE! 🌹", matchType: "contains" },
+        { trigger: "رابط المتجر", response: "🔥 تفضل رابط متجر ALIOPZTE الرسمي:\nhttps://markbrabos010-lab.github.io/ALIOPZTE-/", matchType: "contains" }
+    ],
+    automod: { antiInvite: true, antiLinks: false, antiSpam: true, badWords: [] },
+    welcome: { enabled: false, channelId: "", autoRoleId: "", message: "أهلاً بك يا {user} في سيرفر ALIOPZTE الرسمي! 🎉" },
+    logsChannelId: "",
+    storeNotify: { enabled: true, channelId: "", mentionType: "@everyone", webhookUrl: "" }
+};
+
+function addLog(msg) {
+    const time = new Date().toLocaleTimeString('ar-EG');
+    logsBuffer.push(`[${time}]${msg}`);
+    if (logsBuffer.length > 40) logsBuffer.shift();
+    console.log(msg);
+}
+
+// جلب الإعدادات المحفوظة في GitHub
+async function syncGitHubConfig() {
     try {
         const res = await fetch(CONFIG_URL + "?t=" + Date.now());
         if (res.ok) {
-            config = await res.json();
-            updateBotPresence();
+            const data = await res.json();
+            config = Object.assign(config, data);
+            updatePresence();
         }
-    } catch (err) {
-        console.error("خطأ في جلب إعدادات اللوحة:", err.message);
-    }
+    } catch (e) {}
 }
 
-function updateBotPresence() {
-    if (!client.user || !config) return;
+function updatePresence() {
+    if (!client || !client.user || !isBotOnline) return;
     const typeMap = {
         PLAYING: ActivityType.Playing,
         WATCHING: ActivityType.Watching,
@@ -57,265 +81,444 @@ function updateBotPresence() {
     client.user.setPresence({
         status: config.statusMode || 'online',
         activities: [{
-            name: config.activityText || 'ALIOPZTE Store',
+            name: config.activityText || 'ALIOPZTE Store 🔥',
             type: typeMap[config.activityType] ?? ActivityType.Playing
         }]
     });
 }
 
-// 2. مراقبة متجر ALIOPZTE وإرسال منشن تلقائي فور نزول عنصر جديد
+// تعريف وتسجيل أوامر السلاش (/)
+const SLASH_COMMANDS = [
+    { name: "store", description: "🛒 عرض أحدث الألعاب والمودات في متجر ALIOPZTE" },
+    { name: "ping", description: "⚡ فحص سرعة استجابة البوت" },
+    {
+        name: "clear",
+        description: "🧹 مسح عدد من الرسائل في الروم",
+        options: [{ name: "count", description: "عدد الرسائل (2 - 100)", type: 4, required: false }]
+    },
+    { name: "lock", description: "🔒 قفل الروم الحالي ومنع الكتابة" },
+    { name: "unlock", description: "🔓 فتح الروم الحالي للسماح بالكتابة" },
+    {
+        name: "say",
+        description: "📢 جعل البوت يكتب رسالة أو إعلان",
+        options: [{ name: "text", description: "النص المراد إرساله", type: 3, required: true }]
+    },
+    {
+        name: "kick",
+        description: "👢 طرد عضو من السيرفر",
+        options: [{ name: "user", description: "العضو المراد طرده", type: 6, required: true }]
+    },
+    {
+        name: "ban",
+        description: "🔨 حظر عضو من السيرفر",
+        options: [{ name: "user", description: "العضو المراد حظره", type: 6, required: true }]
+    }
+];
+
+async function registerSlashCommands() {
+    if (!client || !client.user || !botToken) return;
+    try {
+        const rest = new REST({ version: '10' }).setToken(botToken);
+        await rest.put(Routes.applicationCommands(client.user.id), { body: SLASH_COMMANDS });
+        for (const guild of client.guilds.cache.values()) {
+            await rest.put(Routes.applicationGuildCommands(client.user.id, guild.id), { body: SLASH_COMMANDS }).catch(() => {});
+        }
+        addLog("✅ تم تسجيل وتفعيل جميع أوامر السلاش (/) في سيرفرك بنجاح!");
+    } catch (e) {
+        addLog("⚠️ خطأ في تسجيل السلاش: " + e.message);
+    }
+}
+
+// فحص المتجر وإرسال منشن تلقائي عند إضافة عنصر جديد
 async function checkStoreUpdates() {
+    if (!isBotOnline || !client) return;
     try {
         const res = await fetch(STORE_DATA_URL + "?t=" + Date.now());
         if (!res.ok) return;
-        const storeData = await res.json();
-        if (!storeData.items || storeData.items.length === 0) return;
+        const data = await res.json();
+        if (!data.items || data.items.length === 0) return;
 
-        const newestItem = storeData.items[0];
-        if (lastKnownItemId === null) {
-            lastKnownItemId = newestItem.id;
+        const newest = data.items[0];
+        if (lastStoreItemId === null) {
+            lastStoreItemId = newest.id;
             return;
         }
 
-        if (newestItem.id !== lastKnownItemId) {
-            lastKnownItemId = newestItem.id;
-            if (config?.storeNotify?.enabled && config?.storeNotify?.channelId) {
-                const channel = await client.channels.fetch(config.storeNotify.channelId).catch(() => null);
-                if (channel) {
-                    const itemUrl = `${STORE_WEB_URL}?id=${newestItem.id}`;
-                    const embed = new EmbedBuilder()
-                        .setTitle(`🔥 إضافة جديدة في المتجر: ${newestItem.title}`)
-                        .setDescription(newestItem.desc || "تمت إضافة محتوى حصري جديد الآن في متجر ALIOPZTE!")
-                        .addFields(
-                            { name: "📂 القسم", value: `\`${newestItem.category}\``, inline: true },
-                            { name: "🔗 الرابط المباشر", value: `[اضغط هنا للفتح والتحميل](${itemUrl})`, inline: true }
-                        )
-                        .setColor(0x00f2fe)
-                        .setTimestamp()
-                        .setFooter({ text: "ALIOPZTE Store Auto-Notifier" });
+        if (newest.id !== lastStoreItemId) {
+            lastStoreItemId = newest.id;
+            if (!config.storeNotify?.enabled) return;
 
-                    if (newestItem.image && newestItem.image.startsWith('http')) {
-                        embed.setThumbnail(newestItem.image);
-                    }
+            const itemUrl = `${STORE_WEB_URL}?id=${newest.id}`;
+            const mention = config.storeNotify.mentionType !== 'none' ? config.storeNotify.mentionType : '';
+            const embed = new EmbedBuilder()
+                .setTitle(`🆕 إضافة جديدة في المتجر: ${newest.title}`)
+                .setDescription(`${newest.desc || 'متوفر الآن للتحميل في متجر ALIOPZTE!'}\n\n📥 **[اضغط هنا للفتح والتحميل مباشرة](${itemUrl})**`)
+                .setColor(0x00f2fe)
+                .setTimestamp();
 
-                    const row = new ActionRowBuilder().addComponents(
-                        new ButtonBuilder()
-                            .setLabel("📥 تحميل من المتجر الآن")
-                            .setStyle(ButtonStyle.Link)
-                            .setURL(itemUrl)
-                    );
-
-                    const mention = config.storeNotify.mentionType !== 'none' ? config.storeNotify.mentionType : '';
-                    await channel.send({ content: mention, embeds: [embed], components: [row] });
-                }
+            if (config.storeNotify.channelId) {
+                const ch = await client.channels.fetch(config.storeNotify.channelId).catch(() => null);
+                if (ch) await ch.send({ content: `${mention} 🔥 **نزل شيء جديد في متجر ALIOPZTE!**`, embeds: [embed] });
+                addLog(`🔔 تم إرسال منشن تلقائي للعنصر الجديد: ${newest.title}`);
             }
         }
     } catch (e) {}
 }
 
-client.once('ready', async () => {
-    console.log(`✅ البوت شغال الآن باسم: ${client.user.tag}`);
-    await syncConfig();
-    await checkStoreUpdates();
-    setInterval(syncConfig, 20000);       // مزامنة لوحة التحكم كل 20 ثانية
-    setInterval(checkStoreUpdates, 30000); // فحص إضافات المتجر الجديدة كل 30 ثانية
-});
-
-// 3. الترحيب والرتبة التلقائية
-client.on('guildMemberAdd', async (member) => {
-    if (!config || !config.welcome) return;
-
-    if (config.welcome.autoRoleId) {
-        const role = member.guild.roles.cache.get(config.welcome.autoRoleId);
-        if (role) await member.roles.add(role).catch(() => {});
+// تشغيل البوت على سيرفر Render
+async function startDiscordBot(tokenToUse) {
+    if (tokenToUse) botToken = tokenToUse.trim();
+    if (!botToken) {
+        addLog("⚠️ يرجى وضع توكن البوت أولاً!");
+        return false;
     }
 
-    if (config.welcome.enabled && config.welcome.channelId) {
-        const ch = member.guild.channels.cache.get(config.welcome.channelId);
-        if (ch) {
-            const text = (config.welcome.message || "أهلاً بك {user}!")
-                .replace(/\{user\}/g, `<@${member.id}>`)
-                .replace(/\{count\}/g, member.guild.memberCount);
-            ch.send({ content: text }).catch(() => {});
-        }
+    if (client) {
+        try { await client.destroy(); } catch (e) {}
     }
-});
 
-// 4. اللوق (تسجيل حذف الرسائل)
-client.on('messageDelete', async (message) => {
-    if (!message.guild || message.author?.bot || !config?.logsChannelId) return;
-    const logCh = message.guild.channels.cache.get(config.logsChannelId);
-    if (!logCh) return;
+    client = new Client({
+        intents: [
+            GatewayIntentBits.Guilds,
+            GatewayIntentBits.GuildMembers,
+            GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.MessageContent,
+            GatewayIntentBits.GuildModeration
+        ],
+        partials: [Partials.Message, Partials.Channel, Partials.GuildMember]
+    });
 
-    const embed = new EmbedBuilder()
-        .setTitle("🗑️ تم حذف رسالة")
-        .addFields(
-            { name: "👤 العضو", value: `${message.author}`, inline: true },
-            { name: "💬 الروم", value: `${message.channel}`, inline: true },
-            { name: "📝 المحتوى", value: message.content || "صورة / مرفق" }
-        )
-        .setColor(0xef4444)
-        .setTimestamp();
-    logCh.send({ embeds: [embed] }).catch(() => {});
-});
+    client.once('ready', async () => {
+        isBotOnline = true;
+        botUsername = client.user.username;
+        addLog(`✅ البوت شغال الآن 24/7 على Render باسم: ${botUsername}!`);
+        updatePresence();
+        await registerSlashCommands();
+        await checkStoreUpdates();
+    });
 
-// 5. معالجة الرسائل: الحماية + الردود التلقائية + الاختصارات وأوامر الإدارة
-client.on('messageCreate', async (message) => {
-    if (!message.guild || message.author.bot || !config) return;
+    // ترحيب الأعضاء الجدد
+    client.on('guildMemberAdd', async (member) => {
+        if (config.welcome?.autoRoleId) {
+            const role = member.guild.roles.cache.get(config.welcome.autoRoleId);
+            if (role) await member.roles.add(role).catch(() => {});
+        }
+        if (config.welcome?.enabled && config.welcome?.channelId) {
+            const ch = member.guild.channels.cache.get(config.welcome.channelId);
+            if (ch) {
+                const msg = (config.welcome.message || "أهلاً بك يا {user}!")
+                    .replace(/\{user\}/g, `<@${member.id}>`)
+                    .replace(/\{count\}/g, member.guild.memberCount);
+                ch.send(msg).catch(() => {});
+            }
+        }
+    });
 
-    const isAdmin = message.member.permissions.has(PermissionsBitField.Flags.ManageMessages);
+    // تنفيذ أوامر السلاش (/)
+    client.on('interactionCreate', async (inter) => {
+        if (!inter.isChatInputCommand()) return;
+        const { commandName } = inter;
+        addLog(`⚡ تم استخدام أمر سلاش: /${commandName} بواسطة ${inter.user.username}`);
 
-    // أ) الحماية التلقائية (Auto-Mod) لغير الإدارة
-    if (!isAdmin && config.automod) {
-        const contentLower = message.content.toLowerCase();
-
-        if (config.automod.antiInvite && /(discord\.gg\/|discord\.com\/invite\/)/i.test(contentLower)) {
-            await message.delete().catch(() => {});
-            return message.channel.send(`🚫 ${message.author}، يُمنع نشر روابط دعوات الديسكورد هنا!`).then(m => setTimeout(() => m.delete().catch(() => {}), 4000));
+        if (commandName === 'ping') {
+            return inter.reply(`🏓 **Pong!** البوت يعمل على سيرفر Render بسرعة **${client.ws.ping}ms**! ⚡`);
         }
 
-        if (config.automod.antiLinks && /(https?:\/\/[^\s]+)/i.test(contentLower)) {
-            await message.delete().catch(() => {});
-            return message.channel.send(`🔗 ${message.author}، يُمنع نشر الروابط في الشات!`).then(m => setTimeout(() => m.delete().catch(() => {}), 4000));
+        if (commandName === 'store') {
+            try {
+                const res = await fetch(STORE_DATA_URL + "?t=" + Date.now());
+                const storeData = await res.json();
+                const latest = (storeData.items || []).slice(0, 4);
+                const listText = latest.map((it, i) => `**${i + 1}. [${it.title}](${STORE_WEB_URL}?id=${it.id})** — \`${it.category}\``).join("\n") || "لا توجد عناصر حالياً.";
+                const embed = new EmbedBuilder()
+                    .setTitle("🛒 أحدث الإضافات في متجر ALIOPZTE")
+                    .setDescription(listText + `\n\n🌐 **[اضغط هنا لدخول المتجر الكامل](${STORE_WEB_URL})**`)
+                    .setColor(0x00f2fe);
+                return inter.reply({ embeds: [embed] });
+            } catch (e) {
+                return inter.reply(`🛒 تفضل بزيارة متجرنا الرسمي: ${STORE_WEB_URL}`);
+            }
         }
 
-        if (config.automod.badWords?.length > 0) {
-            const hasBadWord = config.automod.badWords.some(w => w && contentLower.includes(w.toLowerCase()));
-            if (hasBadWord) {
+        if (commandName === 'say') {
+            if (!inter.member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
+                return inter.reply({ content: "❌ هذا الأمر للإدارة فقط!", ephemeral: true });
+            }
+            const text = inter.options.getString('text');
+            await inter.reply({ content: "✅ تم الإرسال!", ephemeral: true });
+            return inter.channel.send(text);
+        }
+
+        if (commandName === 'lock') {
+            if (!inter.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
+                return inter.reply({ content: "❌ لا تملك صلاحية إدارة الرومات!", ephemeral: true });
+            }
+            await inter.channel.permissionOverwrites.edit(inter.guild.id, { SendMessages: false });
+            return inter.reply("🔒 **تم قفل الروم بنجاح!**");
+        }
+
+        if (commandName === 'unlock') {
+            if (!inter.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
+                return inter.reply({ content: "❌ لا تملك صلاحية إدارة الرومات!", ephemeral: true });
+            }
+            await inter.channel.permissionOverwrites.edit(inter.guild.id, { SendMessages: null });
+            return inter.reply("🔓 **تم فتح الروم بنجاح!**");
+        }
+
+        if (commandName === 'clear') {
+            if (!inter.member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
+                return inter.reply({ content: "❌ لا تملك صلاحية مسح الرسائل!", ephemeral: true });
+            }
+            const count = Math.min(Math.max(inter.options.getInteger('count') || 10, 1), 100);
+            const deleted = await inter.channel.bulkDelete(count, true).catch(() => null);
+            return inter.reply({ content: `🧹 تم مسح **${deleted ? deleted.size : 0}** رسالة بنجاح!`, ephemeral: true });
+        }
+
+        if (commandName === 'kick') {
+            if (!inter.member.permissions.has(PermissionsBitField.Flags.KickMembers)) {
+                return inter.reply({ content: "❌ لا تملك صلاحية الطرد!", ephemeral: true });
+            }
+            const member = inter.options.getMember('user');
+            if (!member || !member.kickable) return inter.reply({ content: "❌ لا يمكنني طرد هذا العضو!", ephemeral: true });
+            await member.kick();
+            return inter.reply(`👢 تم طرد **${member.user.tag}** بنجاح!`);
+        }
+
+        if (commandName === 'ban') {
+            if (!inter.member.permissions.has(PermissionsBitField.Flags.BanMembers)) {
+                return inter.reply({ content: "❌ لا تملك صلاحية الحظر!", ephemeral: true });
+            }
+            const member = inter.options.getMember('user');
+            if (!member || !member.bannable) return inter.reply({ content: "❌ لا يمكنني حظر هذا العضو!", ephemeral: true });
+            await member.ban();
+            return inter.reply(`🔨 تم حظر **${member.user.tag}** نهائياً!`);
+        }
+    });
+
+    // تنفيذ الاختصارات والردود التلقائية والحماية
+    client.on('messageCreate', async (message) => {
+        if (!message.guild || message.author.bot) return;
+        const content = message.content.trim();
+        if (!content) return;
+
+        addLog(`💬 [${message.author.username}]:${content}`);
+        const contentLower = content.toLowerCase();
+        const isAdmin = message.member?.permissions.has(PermissionsBitField.Flags.ManageMessages);
+
+        // 1. الحماية التلقائية
+        if (!isAdmin && config.automod) {
+            if (config.automod.antiInvite && /(discord\.gg\/|discord\.com\/invite\/)/i.test(contentLower)) {
                 await message.delete().catch(() => {});
-                return message.channel.send(`⚠️ ${message.author}، يرجى التزام الاحترام وعدم استخدام كلمات ممنوعة!`).then(m => setTimeout(() => m.delete().catch(() => {}), 4000));
+                return message.channel.send(`🚫 ${message.author}، يُمنع نشر روابط دعوات الديسكورد!`);
             }
-        }
-
-        if (config.automod.antiSpam) {
-            const now = Date.now();
-            const userData = spamTracker.get(message.author.id) || { count: 0, last: now };
-            if (now - userData.last < 4000) {
-                userData.count++;
-                if (userData.count >= 5) {
+            if (config.automod.antiLinks && /(https?:\/\/[^\s]+)/i.test(contentLower)) {
+                await message.delete().catch(() => {});
+                return message.channel.send(`🔗 ${message.author}، يُمنع نشر الروابط في الشات!`);
+            }
+            if (config.automod.badWords?.length > 0) {
+                const hasBad = config.automod.badWords.some(w => w && contentLower.includes(w.toLowerCase()));
+                if (hasBad) {
                     await message.delete().catch(() => {});
-                    return message.channel.send(`⚡ ${message.author}، توقف عن السبام وتكرار الرسائل!`).then(m => setTimeout(() => m.delete().catch(() => {}), 4000));
+                    return message.channel.send(`⚠️ ${message.author}، يرجى عدم استخدام كلمات ممنوعة!`);
                 }
-            } else {
-                userData.count = 1;
-                userData.last = now;
-            }
-            spamTracker.set(message.author.id, userData);
-        }
-    }
-
-    // ب) الردود التلقائية (Auto-Responder)
-    if (config.autoReplies?.length > 0) {
-        for (const rule of config.autoReplies) {
-            const msgText = message.content.trim().toLowerCase();
-            const trig = rule.trigger.toLowerCase();
-            const matched = (rule.matchType === 'exact') ? (msgText === trig) : msgText.includes(trig);
-            if (matched) {
-                const replyText = rule.response.replace(/\{user\}/g, `<@${message.author.id}>`);
-                return message.reply(replyText).catch(() => {});
             }
         }
-    }
 
-    // ج) الأوامر والاختصارات (ProBot Style)
-    const args = message.content.trim().split(/\s+/);
-    let inputCmd = args.shift().toLowerCase();
-    const prefix = config.prefix || "!";
-    if (inputCmd.startsWith(prefix)) {
-        inputCmd = inputCmd.slice(prefix.length);
-    }
-
-    let matchedCmdKey = null;
-    for (const [key, cmdObj] of Object.entries(config.commands || {})) {
-        if (cmdObj.enabled && cmdObj.aliases?.map(a => a.toLowerCase()).includes(inputCmd)) {
-            matchedCmdKey = key;
-            break;
+        // 2. الردود التلقائية
+        if (config.autoReplies?.length > 0) {
+            for (const rule of config.autoReplies) {
+                const trig = (rule.trigger || "").trim().toLowerCase();
+                if (!trig) continue;
+                const matched = (rule.matchType === 'exact') ? (contentLower === trig) : contentLower.includes(trig);
+                if (matched) {
+                    const replyText = rule.response.replace(/\{user\}/g, `<@${message.author.id}>`);
+                    return message.reply(replyText).catch(() => {});
+                }
+            }
         }
-    }
 
-    if (!matchedCmdKey) return;
+        // 3. الأوامر والاختصارات (ProBot Style)
+        const args = content.split(/\s+/);
+        let firstWord = args.shift().toLowerCase();
+        const prefix = config.prefix || "!";
+        if (firstWord.startsWith(prefix)) firstWord = firstWord.slice(prefix.length);
 
-    // تنفيذ الأمر المطابق للاختصار
-    if (matchedCmdKey === 'clear') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageMessages)) return;
-        const count = Math.min(Math.max(parseInt(args[0]) || 10, 1), 100);
-        await message.delete().catch(() => {});
-        const deleted = await message.channel.bulkDelete(count, true).catch(() => null);
-        if (deleted) {
-            const msg = await message.channel.send(`🧹 تم مسح **${deleted.size}** رسالة.`);
-            setTimeout(() => msg.delete().catch(() => {}), 3000);
+        let matchedCmd = null;
+        for (const [key, cmdObj] of Object.entries(config.commands || {})) {
+            if (cmdObj.enabled && (cmdObj.aliases || []).map(a => a.trim().toLowerCase()).includes(firstWord)) {
+                matchedCmd = key;
+                break;
+            }
         }
+
+        if (!matchedCmd) return;
+        addLog(`⚡ تنفيذ اختصار [${matchedCmd}] بطلب من ${message.author.username}`);
+
+        if (matchedCmd === 'ping') {
+            return message.reply(`🏓 **Pong!** سرعة استجابة البوت على Render: **${client.ws.ping}ms** ⚡`);
+        }
+
+        if (matchedCmd === 'store') {
+            try {
+                const res = await fetch(STORE_DATA_URL + "?t=" + Date.now());
+                const storeData = await res.json();
+                const latest = (storeData.items || []).slice(0, 4);
+                const listText = latest.map((it, i) => `**${i + 1}. [${it.title}](${STORE_WEB_URL}?id=${it.id})** — \`${it.category}\``).join("\n") || "لا توجد عناصر حالياً.";
+                const embed = new EmbedBuilder()
+                    .setTitle("🛒 أحدث الإضافات في متجر ALIOPZTE")
+                    .setDescription(listText + `\n\n🌐 **[اضغط هنا لدخول المتجر الكامل](${STORE_WEB_URL})**`)
+                    .setColor(0x00f2fe);
+                return message.reply({ embeds: [embed] });
+            } catch (e) {
+                return message.reply(`🛒 تفضل رابط المتجر الرسمي: ${STORE_WEB_URL}`);
+            }
+        }
+
+        if (matchedCmd === 'clear') {
+            if (!isAdmin) return;
+            const count = Math.min(Math.max(parseInt(args[0]) || 10, 1), 100);
+            await message.delete().catch(() => {});
+            const deleted = await message.channel.bulkDelete(count, true).catch(() => null);
+            if (deleted) {
+                const m = await message.channel.send(`🧹 تم مسح **${deleted.size}** رسالة.`);
+                setTimeout(() => m.delete().catch(() => {}), 3000);
+            }
+        }
+
+        else if (matchedCmd === 'lock') {
+            if (!message.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) return;
+            await message.channel.permissionOverwrites.edit(message.guild.id, { SendMessages: false });
+            message.reply("🔒 **تم قفل الروم بنجاح!**");
+        }
+
+        else if (matchedCmd === 'unlock') {
+            if (!message.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) return;
+            await message.channel.permissionOverwrites.edit(message.guild.id, { SendMessages: null });
+            message.reply("🔓 **تم فتح الروم بنجاح!**");
+        }
+
+        else if (matchedCmd === 'say') {
+            if (!isAdmin) return;
+            const text = args.join(" ");
+            if (!text) return;
+            await message.delete().catch(() => {});
+            message.channel.send(text);
+        }
+
+        else if (matchedCmd === 'kick') {
+            if (!message.member.permissions.has(PermissionsBitField.Flags.KickMembers)) return;
+            const target = message.mentions.members.first();
+            if (!target) return message.reply("⚠️ منشن العضو المراد طرده!");
+            if (!target.kickable) return message.reply("❌ لا يمكنني طرد هذا العضو!");
+            await target.kick();
+            message.reply(`👢 تم طرد **${target.user.tag}**!`);
+        }
+
+        else if (matchedCmd === 'ban') {
+            if (!message.member.permissions.has(PermissionsBitField.Flags.BanMembers)) return;
+            const target = message.mentions.members.first();
+            if (!target) return message.reply("⚠️ منشن العضو المراد حظره!");
+            if (!target.bannable) return message.reply("❌ لا يمكنني حظر هذا العضو!");
+            await target.ban();
+            message.reply(`🔨 تم حظر **${target.user.tag}** نهائياً!`);
+        }
+
+        else if (matchedCmd === 'mute') {
+            if (!message.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) return;
+            const target = message.mentions.members.first();
+            if (!target) return message.reply("⚠️ منشن العضو المراد إسكاته!");
+            const mins = parseInt(args[1]) || 15;
+            await target.timeout(mins * 60000).catch(() => {});
+            message.reply(`🔇 تم إعطاء ميوت لـ **${target.user.tag}** لمدة **${mins} دقيقة**!`);
+        }
+
+        else if (matchedCmd === 'unmute') {
+            if (!message.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) return;
+            const target = message.mentions.members.first();
+            if (!target) return message.reply("⚠️ منشن العضو لفك الميوت!");
+            await target.timeout(null).catch(() => {});
+            message.reply(`🔊 تم فك الميوت عن **${target.user.tag}**!`);
+        }
+    });
+
+    try {
+        await client.login(botToken);
+        return true;
+    } catch (e) {
+        isBotOnline = false;
+        addLog("❌ فشل تسجيل الدخول للبوت: تأكد من صحة التوكن!");
+        return false;
+    }
+}
+
+// سيرفر الويب في Render (يفتح لوحة التحكم + يستقبل التوكن والأوامر بدون حظر CORS)
+const server = http.createServer(async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+        res.writeHead(204);
+        return res.end();
     }
 
-    else if (matchedCmdKey === 'lock') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) return;
-        await message.channel.permissionOverwrites.edit(message.guild.id, { SendMessages: false });
-        message.reply("🔒 **تم قفل الروم بنجاح!**");
+    if (req.url === '/api/status' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ online: isBotOnline, username: botUsername, logs: logsBuffer, config }));
     }
 
-    else if (matchedCmdKey === 'unlock') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) return;
-        await message.channel.permissionOverwrites.edit(message.guild.id, { SendMessages: null });
-        message.reply("🔓 **تم فتح الروم بنجاح!**");
+    if (req.url === '/api/control' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', async () => {
+            try {
+                const data = JSON.parse(body);
+                if (data.config) {
+                    config = Object.assign(config, data.config);
+                    updatePresence();
+                }
+                if (data.action === 'start') {
+                    const ok = await startDiscordBot(data.token);
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    return res.end(JSON.stringify({ ok, online: isBotOnline, username: botUsername, logs: logsBuffer }));
+                }
+                if (data.action === 'stop') {
+                    if (client) await client.destroy();
+                    isBotOnline = false;
+                    addLog("🔴 تم إيقاف البوت يدوياً من اللوحة.");
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    return res.end(JSON.stringify({ ok: true, online: false, logs: logsBuffer }));
+                }
+                if (data.action === 'sync-slash') {
+                    await registerSlashCommands();
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    return res.end(JSON.stringify({ ok: true, logs: logsBuffer }));
+                }
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ ok: true, online: isBotOnline, logs: logsBuffer }));
+            } catch (err) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ ok: false, error: err.message }));
+            }
+        });
+        return;
     }
 
-    else if (matchedCmdKey === 'kick') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.KickMembers)) return;
-        const target = message.mentions.members.first();
-        if (!target) return message.reply("⚠️ منشن العضو المراد طرده!");
-        if (!target.kickable) return message.reply("❌ لا يمكنني طرد هذا العضو!");
-        await target.kick(args.slice(1).join(" ") || "طرد بواسطة الإدارة");
-        message.reply(`👢 تم طرد **${target.user.tag}** من السيرفر.`);
+    // عرض صفحة لوحة البوت مباشرة عند فتح رابط Render
+    const filePath = path.join(__dirname, 'index.html');
+    if (fs.existsSync(filePath)) {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        return res.end(fs.readFileSync(filePath));
     }
-
-    else if (matchedCmdKey === 'ban') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.BanMembers)) return;
-        const target = message.mentions.members.first();
-        if (!target) return message.reply("⚠️ منشن العضو المراد حظره!");
-        if (!target.bannable) return message.reply("❌ لا يمكنني حظر هذا العضو!");
-        await target.ban({ reason: args.slice(1).join(" ") || "باند بواسطة الإدارة" });
-        message.reply(`🔨 تم حظر **${target.user.tag}** نهائياً.`);
-    }
-
-    else if (matchedCmdKey === 'mute') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) return;
-        const target = message.mentions.members.first();
-        if (!target) return message.reply("⚠️ منشن العضو المراد إسكاته!");
-        const minutes = parseInt(args[1]) || 15;
-        await target.timeout(minutes * 60 * 1000, "ميوت بواسطة الإدارة").catch(() => {});
-        message.reply(`🔇 تم إعطاء ميوت لـ **${target.user.tag}** لمدة **${minutes} دقيقة**.`);
-    }
-
-    else if (matchedCmdKey === 'unmute') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.ModerateMembers)) return;
-        const target = message.mentions.members.first();
-        if (!target) return message.reply("⚠️ منشن العضو لفك الميوت عنه!");
-        await target.timeout(null).catch(() => {});
-        message.reply(`🔊 تم فك الميوت عن **${target.user.tag}**.`);
-    }
-
-    else if (matchedCmdKey === 'say') {
-        if (!isAdmin) return;
-        const text = args.join(" ");
-        if (!text) return;
-        await message.delete().catch(() => {});
-        message.channel.send(text);
-    }
-
-    else if (matchedCmdKey === 'store') {
-        const res = await fetch(STORE_DATA_URL + "?t=" + Date.now()).catch(() => null);
-        if (!res || !res.ok) return message.reply("🛒 تصفح متجرنا الرسمي: " + STORE_WEB_URL);
-        const data = await res.json();
-        const latest = (data.items || []).slice(0, 3);
-        const desc = latest.map((it, idx) => `**${idx + 1}. [${it.title}](${STORE_WEB_URL}?id=${it.id})** (${it.category})`).join("\n") || "لا توجد عناصر حالياً.";
-
-        const embed = new EmbedBuilder()
-            .setTitle("🛒 أحدث الإضافات في متجر ALIOPZTE")
-            .setDescription(desc)
-            .setColor(0x00f2fe)
-            .setURL(STORE_WEB_URL);
-        message.reply({ embeds: [embed] });
-    }
+    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end("ALIOPZTE Bot Render Server is Running 24/7!");
 });
 
-client.login(BOT_TOKEN);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, async () => {
+    console.log(`🚀 Render Server listening on port ${PORT}`);
+    await syncGitHubConfig();
+    if (botToken) await startDiscordBot(botToken);
+    setInterval(syncGitHubConfig, 25000);
+    setInterval(checkStoreUpdates, 30000);
+});
