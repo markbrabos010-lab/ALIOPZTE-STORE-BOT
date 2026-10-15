@@ -1,5 +1,5 @@
 {
-  "prefix": "!",
+  "prefix": ".",
   "statusMode": "online",
   "activityType": "PLAYING",
   "activityText": "ALIOPZTE Store 🔥",
@@ -7,47 +7,83 @@
     "clear": {
       "title": "🧹 مسح الشات (Clear)",
       "enabled": true,
-      "aliases": ["مسح", "م", "clear"]
+      "aliases": [
+        "مسح",
+        "م",
+        "clear"
+      ]
     },
     "ban": {
       "title": "🔨 حظر عضو (Ban)",
       "enabled": true,
-      "aliases": ["باند", "ب", "ban"]
+      "aliases": [
+        "باند",
+        "ب",
+        "ban"
+      ]
     },
     "kick": {
       "title": "👢 طرد عضو (Kick)",
       "enabled": true,
-      "aliases": ["طرد", "ط", "kick"]
+      "aliases": [
+        "طرد",
+        "ط",
+        "kick"
+      ]
     },
     "mute": {
       "title": "🔇 إسكات عضو مؤقتاً (Timeout/Mute)",
       "enabled": true,
-      "aliases": ["ميوت", "اسكت", "mute"]
+      "aliases": [
+        "ميوت",
+        "اسكت",
+        "mute"
+      ]
     },
     "unmute": {
       "title": "🔊 فك الإسكات (Unmute)",
       "enabled": true,
-      "aliases": ["تكلم", "فك", "unmute"]
+      "aliases": [
+        "تكلم",
+        "فك",
+        "unmute"
+      ]
     },
     "lock": {
       "title": "🔒 قفل الروم (Lock Channel)",
       "enabled": true,
-      "aliases": ["قفل", "ق", "lock"]
+      "aliases": [
+        "قفل",
+        "ق",
+        "lock"
+      ]
     },
     "unlock": {
       "title": "🔓 فتح الروم (Unlock Channel)",
       "enabled": true,
-      "aliases": ["فتح", "ف", "unlock"]
+      "aliases": [
+        "فتح",
+        "ف",
+        "unlock"
+      ]
     },
     "say": {
       "title": "📢 التحدث باسم البوت (Say)",
       "enabled": true,
-      "aliases": ["قول", "كرر", "say"]
+      "aliases": [
+        "قول",
+        "كرر",
+        "say"
+      ]
     },
     "store": {
       "title": "🛒 عرض آخر إضافات المتجر (Store)",
       "enabled": true,
-      "aliases": ["المتجر", "متجر", "جديد"]
+      "aliases": [
+        "المتجر",
+        "متجر",
+        "جديد"
+      ]
     }
   },
   "autoReplies": [
