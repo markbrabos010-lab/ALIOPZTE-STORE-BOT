@@ -5,14 +5,14 @@
   "activityText": "ALIOPZTE Store 🔥",
   "commands": {
     "clear": {
-      "title": "🧹 مسح الشات (/clear)",
+      "title": "🧹 مسح الشات",
       "enabled": true,
       "aliases": [
         "مسح"
       ]
     },
     "lock": {
-      "title": "🔒 قفل الروم (/lock)",
+      "title": "🔒 قفل الروم",
       "enabled": true,
       "aliases": [
         "قفل",
@@ -21,7 +21,7 @@
       ]
     },
     "unlock": {
-      "title": "🔓 فتح الروم (/unlock)",
+      "title": "🔓 فتح الروم",
       "enabled": true,
       "aliases": [
         "فتح",
@@ -30,7 +30,7 @@
       ]
     },
     "ban": {
-      "title": "🔨 حظر عضو (/ban)",
+      "title": "🔨 حظر عضو (Ban)",
       "enabled": true,
       "aliases": [
         "باند",
@@ -39,7 +39,7 @@
       ]
     },
     "kick": {
-      "title": "👢 طرد عضو (/kick)",
+      "title": "👢 طرد عضو (Kick)",
       "enabled": true,
       "aliases": [
         "طرد",
@@ -48,7 +48,7 @@
       ]
     },
     "mute": {
-      "title": "🔇 إسكات عضو (/mute)",
+      "title": "🔇 إسكات عضو (Mute)",
       "enabled": true,
       "aliases": [
         "ميوت",
@@ -57,7 +57,7 @@
       ]
     },
     "unmute": {
-      "title": "🔊 فك الإسكات (/unmute)",
+      "title": "🔊 فك الإسكات",
       "enabled": true,
       "aliases": [
         "تكلم",
@@ -66,7 +66,7 @@
       ]
     },
     "say": {
-      "title": "📢 التحدث باسم البوت (/say)",
+      "title": "📢 التحدث باسم البوت",
       "enabled": true,
       "aliases": [
         "قول",
@@ -75,7 +75,7 @@
       ]
     },
     "store": {
-      "title": "🛒 عرض المتجر (/store)",
+      "title": "🛒 عرض جديد المتجر",
       "enabled": true,
       "aliases": [
         "المتجر",
@@ -84,7 +84,7 @@
       ]
     },
     "ping": {
-      "title": "⚡ سرعة استجابة البوت (/ping)",
+      "title": "⚡ سرعة الاستجابة",
       "enabled": true,
       "aliases": [
         "بنق",
@@ -112,7 +112,7 @@
   ],
   "automod": {
     "antiInvite": true,
-    "antiLinks": false,
+    "antiLinks": true,
     "antiSpam": true,
     "badWords": []
   },
