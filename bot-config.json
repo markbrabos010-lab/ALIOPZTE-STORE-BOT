@@ -8,9 +8,7 @@
       "title": "🧹 مسح الشات (Clear)",
       "enabled": true,
       "aliases": [
-        "مسح",
-        "م",
-        "clear"
+        "مسح"
       ]
     },
     "ban": {
